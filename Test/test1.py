@@ -23,7 +23,7 @@ def blitRotate(surf, image, pos, originPos, angle):
     surf.blit(rotated_image, origin)
   
 pygame.init()
-size = (600,600)
+size = (800,500)
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 

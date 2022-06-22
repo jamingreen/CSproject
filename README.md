@@ -17,3 +17,6 @@ Objects:
 Should have:
 1. 
 ## This is the computer science a level project
+
+## Details
+* Map size: 800px x 500px, 16 x 10 block (where size of block = 50 x 50)
