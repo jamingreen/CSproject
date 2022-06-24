@@ -15,8 +15,11 @@ class Button(pygame.sprite.Sprite):
         if self.rect.collidepoint(position):
             pass
         return status
+    
+    def keyResponse(self,event,status):
+        return status
 
-    def draw(self,screen):
+    def draw(self,screen, cam_pos = pygame.math.Vector2(0,0)):
         screen.blit(self.image, (self.rect.x,self.rect.y))
 
 
@@ -61,3 +64,56 @@ class MouseBuffer():
     
     def count(self):
         self.timer +=1
+
+#Apply a function to items in a list with optional arguments
+def apply(list, func, **args):
+    result = []
+    argument = ""
+    for key, value in args.items():
+        argument = argument + ", " + str(key) +"="+str(value)
+    argument = argument + ")"
+    for i in list:
+        com = f"x = {func}({ i }" + argument
+        loc = {}
+        exec(f"{com}",globals(),loc)
+        x = loc["x"]
+        result.append(x)
+    return result
+
+class WordButton():
+
+    def __init__(self,width, height, position, color, textColor, txt):
+        super().__init__()
+        self.rect = pygame.Rect(*position, width, height)
+        self.color = color
+        font = pygame.font.Font("freesansbold.ttf", 20)
+        self.txt = font.render(txt, True, textColor)
+        self.txt_pos = position
+
+    def mouseInteraction(self,position, status):
+        return status
+
+    def keyResponse(self,event,status):
+        return status
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.rect, 0)
+        screen.blit(self.txt, self.txt_pos)
+
+class Background(pygame.sprite.Sprite):
+
+    def __init__(self, width, height, position, color):
+        super().__init__()
+        self.width = width
+        self.height = height
+        self.color = color
+        self.rect = pygame.Rect(position[0], position[1], width, height)
+    
+    def draw(self,screen):
+        pygame.draw.rect(screen, self.color, self.rect)
+
+    def mouseInteraction(self, position, status):
+        return status
+
+    def keyResponse(self,event,status):
+        return status

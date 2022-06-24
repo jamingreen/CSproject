@@ -1,6 +1,6 @@
 from re import L
 from jinja2 import pass_context
-import pygame, math, sys
+import pygame, math, sys, re
 from helper import *
 from mario import Game
 from constants import *
@@ -40,15 +40,20 @@ class Main():
     def setCurrentScreen(self, newScreen):
         self.currentScreen = newScreen
 
+    def initialiseGame(self, level):
+        game = Game(level)
+        game.play()
+
     def readStatus(self):
-        i = 0
-        while i < len(self.status):
-            stat = self.status[i]
+        for stat in self.status:
             if stat == SCREENTOSETTING:
                 self.setCurrentScreen(SETTINGSCREEN)
-            del self.status[i]
+            elif check_status_init_level(stat):
+                level = extract_level_from_status_code(stat)
+                self.initialiseGame(level)
+        self.status = []
 
-    def logic(self):
+    def logic(self):    
         self.mouseBuffer.logic()
         pass
 
@@ -71,7 +76,7 @@ class Main():
                 if event.type == pygame.QUIT:
                     sys.exit()
                 self.keyResponse(event)
-                    
+                
             click,_,_ = pygame.mouse.get_pressed()
             if click == True and not self.mouseBuffer.flag:
                 self.mouseBuffer.tFlag()
@@ -79,7 +84,7 @@ class Main():
                 mouse = pygame.mouse.get_pos()
                 self.mouseResponse(mouse)
 
-            
+            self.readStatus()
             #--Game logic goes after this comment
             self.logic()
 
@@ -137,13 +142,8 @@ class LevelButton(Button):
     def mouseInteraction(self,position, status):
         if self.rect.collidepoint(position):
             print("Level button mouse collide")
-            self.initialiseGame()
+            status.extend([create_level_status_code(self.level)])
         return status
-
-    def initialiseGame(self):
-        game = Game(self.level)
-        game.play()
-
 
 # Setting Screen
 class Setting():
