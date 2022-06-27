@@ -212,7 +212,7 @@ class GameMenuScreen():
         self.background = Background(706, 381, (47, 48), YELLOW)
         self.closeButton = CloseButton(24,24, (741, 36), CLOSEGAMEMENU)
         self.quitButton = QuitButton((331, 278))
-        self.controlButton = ControlButton((331,158))
+        self.controlButton = InstructionButton((331,158))
         self.gameMenu_sprite_group = [self.background, self.closeButton, self.quitButton,self.controlButton]
 
     def drawScreen(self, screen):

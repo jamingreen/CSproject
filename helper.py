@@ -1,4 +1,4 @@
-import csv, pygame
+import csv, pygame, itertools
 from os import read
 from constants import *
 
@@ -40,7 +40,7 @@ def relativeCoor2DeCoor(relativePosition):
 
 def deCoor2RelativeCoor(dePosition):
     return (dePosition[0]/BLOCKSIZE[0], dePosition[1]/BLOCKSIZE[1])
-
+    
 
 class MouseBuffer():
 
@@ -86,9 +86,10 @@ class WordButton():
         super().__init__()
         self.rect = pygame.Rect(*position, width, height)
         self.color = color
-        font = pygame.font.Font("freesansbold.ttf", 20)
+        font = pygame.font.Font("freesansbold.ttf", FONTSIZE)
         self.txt = font.render(txt, True, textColor)
-        self.txt_pos = position
+        fontSize = self.txt.get_size()
+        self.txt_pos = (position[0] + (width - fontSize[0])/2, position[1] + (height - fontSize[1])/2)
 
     def mouseInteraction(self,position, status):
         return status
@@ -139,14 +140,14 @@ class QuitButton(WordButton):
             status.extend([CLOSEGAME])
         return status
     
-class ControlButton(WordButton):
+class InstructionButton(WordButton):
 
     def __init__(self, position):
-        super().__init__(140,40, position, (51, 51, 204), WHITE, "Controls")
+        super().__init__(140,40, position, (51, 51, 204), WHITE, "Instructions")
     
     def mouseInteraction(self, position, status):
         if self.rect.collidepoint(position):
-            pass
+            status.append(SCREENTOINSTRUCTION)
         return status
 
 class QuitGameButton(WordButton):
@@ -183,3 +184,38 @@ class AirTile(Tile):
     
     def __init__(self,position):
         super().__init__(position,"images/airTile.png")
+
+class InstructionScreen():
+
+    def __init__(self):
+        self.instructions = [
+            " 'A' key for going to the left ",
+            " 'D' key for going to the right",
+            " 'W' key for jumping",
+            " 'SPACE' key for shooting"
+        ]
+        self.fonts = []
+        font = pygame.font.Font("freesansbold.ttf", FONTSIZE)
+        start_y = 108
+        for instruction in self.instructions:
+            txt = font.render(instruction, True, BLACK)
+            fontSize = txt.get_size()
+            txt_pos = (76 + (648 - fontSize[0])/2, start_y + INSTRUCTION_MENU_PADDING)
+            start_y += fontSize[1] + INSTRUCTION_MENU_PADDING * 2
+            self.fonts.append((txt,txt_pos))
+        self.background = Background(648,336,(76, 64), SETTINGSCREENCOLOR)
+        self.closeButton = CloseButton(24,24, (712, 52), SCREENTOGAMEMENU)
+        self.instruction_sprite_group = [self.background, self.closeButton]
+
+    def mouseInteraction(self, position, status):
+        return self.closeButton.mouseInteraction(position, status)
+
+    def keyResponse(self,event,status):
+        return status
+    
+    def drawScreen(self, screen):
+        for sprite in self.instruction_sprite_group:
+            sprite.draw(screen)
+        for txt, txt_pos in self.fonts:
+            screen.blit(txt, txt_pos)
+        

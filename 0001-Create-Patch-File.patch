@@ -1,0 +1,515 @@
+From 5b153bf3655f5731945cca44ea0899470207829d Mon Sep 17 00:00:00 2001
+From: jamingreen <jamiegr252@gmail.com>
+Date: Mon, 27 Jun 2022 14:55:38 +0100
+Subject: [PATCH] Create Patch File
+
+---
+ __pycache__/constants.cpython-39.pyc    | Bin 1742 -> 1813 bytes
+ __pycache__/helper.cpython-39.pyc       | Bin 4334 -> 8130 bytes
+ __pycache__/mario.cpython-39.pyc        | Bin 11052 -> 7764 bytes
+ constants.py                            |   7 +--
+ helper.py                               |  70 +++++++++++++++++++++++-
+ images/Screenshot 2022-06-24 141553.png | Bin 0 -> 227 bytes
+ main1.py                                |  47 +++++++++++++---
+ mario.py                                |  58 +-------------------
+ 8 files changed, 111 insertions(+), 71 deletions(-)
+ create mode 100644 images/Screenshot 2022-06-24 141553.png
+
+diff --git a/__pycache__/constants.cpython-39.pyc b/__pycache__/constants.cpython-39.pyc
+index f3b033e072f2ff592cd71fe7bb602d58d5a0da6e..4e2fecddaa6835f9d990ec7ccbe9128e4b2bebf7 100644
+GIT binary patch
+delta 724
+zcmY*WTWb?R6rR~j+?Z^QHCR)ddukd&W1f_VRg-jEg1OXOL`QVlX148O(!lOkqzF|M
+zd=SJi_~2Xp2R`)02SI!mpZb(v(EJO}Bo*om^PO+Lb2#VBoImR48P!nL^9a_Dqwkx)
+zhH4o99A<Aus7m~%m!c2?oCzU%A&9mFqSAnb$jtC{u0$8eRT?G>rZVwIt{@VoQ4#?y
+zN@FBO<0MWKH2DsZ1WnOJut|E2ropBtZlTQ5@T9Mb<4;g~e9YlDdw}Oc0iYRSY;k32
+z!fg*2dzQVyIZW6${9fJnnlCLkwr%uHJHQHp;feB)C_5Ck4sHQ;1OSBX1Yj3)e!4i9
+z;gsPxyp)Svd?---3Vjvc^0tKf{`|AbuH{-r&vMLI)qG+0a@i;O<-*f!DkF}h&B35I
+z5^QrM_YJqZlffg8<J#8lw#~c9PtcA79nE!j%<gmDaSeCR(Je@-_jtM$Uj4MiG&>S4
+zoL~_t>zlp;oOYbGrDWnBkMjc{tY8TXI4JnBy$tuvqMZUm*cT~(KxSK7yIrZTx5`aT
+ztCt(qMw3Xb3ekwSRBe>+PiXL8kY4Jv+l{(DQ7=}thg$VNDKM2Pwc@%q4f1VNi;uPD
+z^fG_e%~Sax*G6%56&fJyu6*M%QR|(W-dNKoku4(Cw0eiI4|0mnPhOD~?NO!8PUJy>
+y56Dh);IEo~-I-qiZKT}p59nUcyu)YbtN|#ZgxN>W^-EX+=7$4Yl+G!lBK`%=tf)2s
+
+delta 563
+zcmY*Wzi$&U82#+?T?52vB1KiJ<dVw|s)nLcF;GM)h(uQukzR(oFjy^7kgw8JX%S9A
+zfEXB%7$LG)Sb&X@1&N8N3kwU|{RbJ482AJD?if%l`Msy-XMdmVx49pjk2pUIINrbc
+za{tqm+vMwXb)ynyBrE|UUjmsc!afyQInO|Fk(2r9i?wUvT)I|X1W}T<D9e(tWkpnE
+zRaB)TYcD}KvMw9QHQAKsk?WH9&|04UKD<aH#{h`_5P%k)UB>!~BcP6uW-F;yR^rd=
+zcVvyk`a5|=71w)oWZ8*t>l3=qucDk#1R%=M4{7lxL)}T-MTBGcKqPq%AF0Yq>Vq_J
+z0(QZ?XN7y+qv$vqjiX8E^uovCIM{Ac{n}VK_pbo%S5^JlC>J)9^OA0WWC^3HnN-rh
+zi~(_UhpnE<KV^;jtt6jK^BKYjB}JMg>H-?AhN>aO`Wsu{jG5mRZhWTQ>v!&?vgo@(
+z(DiQn!}cHu`ra^g3qAL)+dF0HEwh4;vTK$QpO{w`V(txghW+hfn)PG0<9dTwpO{Sy
+y%*-vlZXIkmSXwm`NP1EKubHYUdU59Z;RE?-9NxgMfk_)7W9XmOCC%pY#QF=e4S(7I
+
+diff --git a/__pycache__/helper.cpython-39.pyc b/__pycache__/helper.cpython-39.pyc
+index 3a0a43a381242789455c217cac435bbfc0451b28..c35b001a3997627845c26866086a3b411c5fbe6e 100644
+GIT binary patch
+literal 8130
+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
+JH$PJ{{|ln9-Dv;-
+
+delta 744
+zcmZvaO=}Zj5XX0RH@i>svWZR9G--B;rj@O!(l@NNwH6N^1P=|QA>yGgi>A~DC#x0-
+zB6#s=nY&a34_-V3J$g{D-aM4x!F~Y!49;x8Ub-+p=9&G^F!Rjwb@^}ESx=?n8h@YP
+zeA?Jf>^r0S3vIvp+}eVg<`4Jg!PUX1HRA)Vq_dPWvE;}4=EhDd#1yAtMsP|n%<$=*
+z`N(tSSQglfzWH!He9*V+!DiUTX{^w%M4oQPzHr^R)pgIYrmJmh2hfGLfNrR7!Ak(G
+zs~;GlN$;&GDAJ)-fl)e2WL+ulv2_$fgCr=3!!x%Qgkfv<K7BOK=6wst_#ci7E(l~q
+zbm^X5DpkcD5lk=&Y#o!K^rV3kbXiT(ce@Bp`fcBV89v{FX?m(wV3v-ux!w;|0Bc^d
+z7wFH>D_7ipY_t7%H^eIvz8VEE=ma54D2`SXUXb2liM&M9x*@tjV38;>RynEJYa+TX
+zSQ0GCrH#z7JIU6Od6ceV%22j4aITk11^}zvVu@a-e!@ixoJO(Es^(A_?1eYmJ8i@!
+zpK(o4r9-DRxKMDZo^F5_HCU!^>Gt$8OME+89#%viEm^9eENf8bu84HZO5l8yT%o;8
+zrE$_Q#}6VZHzhgw|2W=AjbmcbZh0e$=QB_uzC)IGsUR!E8NsYT?gLi^HG1NWpOGh+
+Rktd<&PG^#wY&v=6`~ynFkedJi
+
+diff --git a/__pycache__/mario.cpython-39.pyc b/__pycache__/mario.cpython-39.pyc
+index c4ddd4bbe5a22e581f6d110ec88e733de0afe7bc..cf30c879a34da9cd084ae2dec45df6fbfc392969 100644
+GIT binary patch
+delta 1191
+zcmZ`&OKcNY6rDTc`NWAoag5{8e4La7O-KU5X{tm<e526jD?)J{AkHKc1p^_;^W+1H
+z3X+SuXa#~RR27NPNUSP^kSrmg?$}h7+C@uNvtU72T~#b9R?yx%4o#83qjz-fJLetG
+zd-u)#6C0_Z6$tnx`n6trJh`p@MzB`?LAud)t0q`b#zK9P9kfGVN_MCqkA-a*mCSJQ
+z7<}pjvv^1S7GN)aq#uAJF6ob;4cm>Q&{JG894K$6NRedd!N1Fz;Rr5-qPW|?u+3BU
+zZpq9Bu(2s#{ME0@kj1AJ-_@9^>zh2EbHpgiX@(5L7+wvuLpK%!{csZh30#CO3a-L$
+zg5#U)b#PWY#a0$hZ%#fBJ^6Sm<Rr<iGMl>~#!Jjv5vRR$243vyea8--_~dwoQeIS7
+zL1*!=um&RsSm)Dn_5R+>k>T`^tDKv@=qmkLOH8qtWsypoVOh+SyxGx_gNJ*C&6P?k
+zKN}I##7*ptOeP13i6MqzhMf%E3|=6w@yuS9IKyQpx{)TBD87p108%&;9jsrWc~=p0
+z%c7Yb9<(syxbKU<N3Q`aq7_S)f8jYT+ZLDcZtMdn;E%CR_=>lwULoxv8r3U_%f!65
+zFnwYN^8kUXPg%3s`MJDEvAvt$@(GQ+k3a%HTrvi&`3_rH%R{Cn-nFqSWE9=pZMBl<
+z8kWV=c)d0cBdFAUSkuMw1jE}q_!;-tS&+u{y6Qj&$)-|zt2P{r#MNCi^9w$&+tu@)
+ze`SNn{}=0JPjKlSQIyzE*jK+g#9eSC8*JHD94Po!rL62IwvQgw@p-lCXtq`WQgp|#
+zb&r*;N@rynDh-`R*$l7rW2j+Y;x<M8xkg}?yZ%Gg)VUckw|K#JwM_58z;N2d^9^xL
+z>>-1TR~wSx;^T%Ey0vt^5$@en8hP&ng)oFsO^jFHqp4DFHcx?jQ)-FYL)68aiCnGc
+z;*G!QU>mz)TUOSd;qJx-xQFYF+vy_l6)<V`58P<%DF0vk@YRkuHaEr1-$>0H1cq$r
+zhR;w%oC>qj`zVA=TpVIpMys{9>1(E+GiVGc0#_TI7ddBI)bmUwK4^_ma23964aK<+
+T38(;rA2})qGtpGg4Ez5Dfn5wx
+
+delta 3755
+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
+C2GczN
+
+diff --git a/constants.py b/constants.py
+index d3b522f..a2c4085 100644
+--- a/constants.py
++++ b/constants.py
+@@ -7,6 +7,7 @@ LIGHTGREY = (213, 216, 220)
+ BLACK = (0, 0, 0)
+ YELLOW = (251,208,0)
+ WHITE = (255,255,255)
++SETTINGSCREENCOLOR = (144, 212, 204)
+ 
+ #Size
+ SIZE = (800,500)
+@@ -35,6 +36,7 @@ SCREENTOSETTING = "change to setting screen"
+ SCREENTOGAMEMENU = "change to game menu screen"
+ CLOSEGAMEMENU = "close game menu screen"
+ CLOSEGAME = "close game"
++EXITGAME = "exit game"
+ 
+ # Camera
+ PLAYER_LEFT_PADDING =  50
+@@ -57,10 +59,7 @@ def create_level_status_code(level):
+     return f"Initialise Level {level}"
+ 
+ def check_status_init_level(string):
+-    if re.match("^Initialise Level", string):
+-        return True
+-    else:
+-        return False
++    return bool(re.match("^Initialise Level.+[0-9]+$", string))
+ 
+ def extract_level_from_status_code(status_code):
+     if not create_level_status_code(status_code):
+diff --git a/helper.py b/helper.py
+index f00de4c..d96378b 100644
+--- a/helper.py
++++ b/helper.py
+@@ -31,7 +31,7 @@ class SettingButton(Button):
+     def mouseInteraction(self,position, status):
+         if self.rect.collidepoint(position):
+             print("Setting Button mouse collide")
+-            status.extend(SCREENTOSETTING)
++            status.extend([SCREENTOSETTING])
+         return status
+     
+ 
+@@ -116,4 +116,70 @@ class Background(pygame.sprite.Sprite):
+         return status
+ 
+     def keyResponse(self,event,status):
+-        return status
+\ No newline at end of file
++        return status
++
++class CloseButton(Button):
++
++    def __init__(self,width, height, position, statusCode):
++        super().__init__(width, height, position, "images/closeButton.jpg")
++        self.statusCode = statusCode
++
++    def mouseInteraction(self, position, status):
++        if self.rect.collidepoint(position):
++            status.extend([self.statusCode])
++        return status
++
++class QuitButton(WordButton):
++
++    def __init__(self, position):
++        super().__init__(140,40, position, (51, 51, 204), WHITE, "Exit Game")
++    
++    def mouseInteraction(self, position, status):
++        if self.rect.collidepoint(position):
++            status.extend([CLOSEGAME])
++        return status
++    
++class ControlButton(WordButton):
++
++    def __init__(self, position):
++        super().__init__(140,40, position, (51, 51, 204), WHITE, "Controls")
++    
++    def mouseInteraction(self, position, status):
++        if self.rect.collidepoint(position):
++            pass
++        return status
++
++class QuitGameButton(WordButton):
++
++    def __init__(self, position):
++        super().__init__(140, 40, position, (51, 51, 204), WHITE, "Quit Game") 
++
++    def mouseInteraction(self, position, status):
++        if self.rect.collidepoint(position):
++            status.extend([EXITGAME])
++        return status
++
++class Tile(pygame.sprite.Sprite):
++
++    def __init__(self,position, imgFile):
++        super().__init__()
++        self.x = position[0]
++        self.y = position[1]
++        self.image = pygame.transform.scale(pygame.image.load(imgFile), BLOCKSIZE)
++        self.rect = self.image.get_rect()
++        self.rect.x = self.x
++        self.rect.y = self.y
++
++    def draw(self, screen, cam_pos):
++        screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
++    
++
++class Ground(Tile):
++
++    def __init__(self,position):
++        super().__init__(position, "images/groundTile.png")
++
++class AirTile(Tile):
++    
++    def __init__(self,position):
++        super().__init__(position,"images/airTile.png")
+\ No newline at end of file
+diff --git a/images/Screenshot 2022-06-24 141553.png b/images/Screenshot 2022-06-24 141553.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..dad24f46acffbcd4dfbaaf5e69e9826b819c91d8
+GIT binary patch
+literal 227
+zcmeAS@N?(olHy`uVBq!ia0vp^CP3`R!3HGr51RS_DaPU;cPEB*=VV?2IV|apzK#qG
+z8~eHcB(eheoCO|{#S9E$svykh8Km+7C|Kd?;uum9_xAio!3G0?0~^}^8b^B_Yiv_2
+zv0PpFHrw|1+~zy={TC;!Q;c=q)mFm$QtFcFl5CIblnHD)Tcaw?e2)LKWdhI*44$rj
+JF6*2UngDSlP+<T7
+
+literal 0
+HcmV?d00001
+
+diff --git a/main1.py b/main1.py
+index 5b1e8b2..29036d7 100644
+--- a/main1.py
++++ b/main1.py
+@@ -16,10 +16,11 @@ class Main():
+         self.all_sprites_list = []
+         self.mouseBuffer = MouseBuffer()
+         self.currentScreen = MENU
++        #self.settingScreen = MenuSettingScreen()
+ 
+         # Objects
+         self.menu = Menu(self.screen)
+-        self.setting = Setting()
++        self.setting = MenuSettingScreen()
+         
+         self.all_sprites_list.extend([self.menu, self.setting])
+ 
+@@ -48,9 +49,13 @@ class Main():
+         for stat in self.status:
+             if stat == SCREENTOSETTING:
+                 self.setCurrentScreen(SETTINGSCREEN)
++            elif stat == SCREENTOGAMEMENU:
++                self.setCurrentScreen(MENU)
+             elif check_status_init_level(stat):
+                 level = extract_level_from_status_code(stat)
+                 self.initialiseGame(level)
++            elif stat == EXITGAME:
++                sys.exit()
+         self.status = []
+ 
+     def logic(self):    
+@@ -84,7 +89,9 @@ class Main():
+                 mouse = pygame.mouse.get_pos()
+                 self.mouseResponse(mouse)
+ 
++            print(self.status)
+             self.readStatus()
++            
+             #--Game logic goes after this comment
+             self.logic()
+ 
+@@ -145,12 +152,11 @@ class LevelButton(Button):
+             status.extend([create_level_status_code(self.level)])
+         return status
+ 
+-# Setting Screen
+-class Setting():
++# Ranking Screen
++class RankingScreen():
+ 
+     def __init__(self):
+         pass
+-    
+ 
+     def mouseInteraction(self,position, status):
+         pass
+@@ -158,18 +164,41 @@ class Setting():
+     def drawScreen(self, screen):
+         pass
+ 
+-# Ranking Screen
+-class RankingScreen():
++# Setting Screen
++class MenuSettingScreen:
+ 
+     def __init__(self):
+-        pass
++        self.background = Background(648,336,(76, 64), SETTINGSCREENCOLOR)
++        self.closeButton = CloseButton(24,24, (712, 52), SCREENTOGAMEMENU)
++        self.exitButton = QuitGameButton((331, 278))
++        self.controlButton = ControlButton((331,158))
++        self.gameMenu_sprite_group = [self.background, self.closeButton, self.exitButton,self.controlButton]
++
++    def drawScreen(self, screen):
++        for sprite in self.gameMenu_sprite_group:
++            sprite.draw(screen)
+ 
+     def mouseInteraction(self,position, status):
+-        pass
++        for sprite in self.gameMenu_sprite_group:
++            status = sprite.mouseInteraction(position, status)
++        return status
+ 
+-    def drawScreen(self, screen):
++    def keyResponse(self,event, status):
++        for sprite in self.gameMenu_sprite_group:
++            status = sprite.keyResponse(event, status)
++        return status
++
++class InstructionScreen():
++
++    def __init__(self):
+         pass
+ 
++    def mouseInteraction(self, position, status):
++        return status
++
++    def keyResponse(self,event,status):
++        return status
++
+ if __name__ == "__main__":
+     pygame.init()
+     main = Main()
+diff --git a/mario.py b/mario.py
+index ef37a68..bf6af19 100644
+--- a/mario.py
++++ b/mario.py
+@@ -153,6 +153,7 @@ class Player(pygame.sprite.Sprite):
+             elif event.key == pygame.K_SPACE:
+                 self.stop_shooting()
+         return status
++
+ # 16 x 10 block per map
+ class Map:
+     
+@@ -195,31 +196,6 @@ class Map:
+             sprite.draw(screen, cam_pos)
+ 
+ 
+-class Tile(pygame.sprite.Sprite):
+-
+-    def __init__(self,position, imgFile):
+-        super().__init__()
+-        self.x = position[0]
+-        self.y = position[1]
+-        self.image = pygame.transform.scale(pygame.image.load(imgFile), BLOCKSIZE)
+-        self.rect = self.image.get_rect()
+-        self.rect.x = self.x
+-        self.rect.y = self.y
+-
+-    def draw(self, screen, cam_pos):
+-        screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
+-    
+-
+-class Ground(Tile):
+-
+-    def __init__(self,position):
+-        super().__init__(position, "images/groundTile.png")
+-
+-class AirTile(Tile):
+-    
+-    def __init__(self,position):
+-        super().__init__(position,"images/airTile.png")
+-
+ class MenuButton(Button):
+ 
+     def __init__(self,):
+@@ -234,7 +210,7 @@ class GameMenuScreen():
+ 
+     def __init__(self):
+         self.background = Background(706, 381, (47, 48), YELLOW)
+-        self.closeButton = CloseButton(24,24, (741, 36))
++        self.closeButton = CloseButton(24,24, (741, 36), CLOSEGAMEMENU)
+         self.quitButton = QuitButton((331, 278))
+         self.controlButton = ControlButton((331,158))
+         self.gameMenu_sprite_group = [self.background, self.closeButton, self.quitButton,self.controlButton]
+@@ -251,34 +227,4 @@ class GameMenuScreen():
+     def keyResponse(self,event, status):
+         for sprite in self.gameMenu_sprite_group:
+             status = sprite.keyResponse(event, status)
+-        return status
+-
+-class CloseButton(Button):
+-
+-    def __init__(self,width, height, position):
+-        super().__init__(width, height, position, "images/closeButton.jpg")
+-
+-    def mouseInteraction(self, position, status):
+-        if self.rect.collidepoint(position):
+-            status.extend([CLOSEGAMEMENU])
+-        return status
+-
+-class QuitButton(WordButton):
+-
+-    def __init__(self, position):
+-        super().__init__(140,40, position, (51, 51, 204), WHITE, "Exit Game")
+-    
+-    def mouseInteraction(self, position, status):
+-        if self.rect.collidepoint(position):
+-            status.extend([CLOSEGAME])
+-        return status
+-    
+-class ControlButton(WordButton):
+-
+-    def __init__(self, position):
+-        super().__init__(140,40, position, (51, 51, 204), WHITE, "Controls")
+-    
+-    def mouseInteraction(self, position, status):
+-        if self.rect.collidepoint(position):
+-            pass
+         return status
+\ No newline at end of file
+-- 
+2.33.0.windows.2
+

@@ -16,10 +16,12 @@ SETTINGS_BUTTON_SIZE = (105, 40)
 LEVEL_BUTTON_SIZE = (148, 40)
 LEVEL_IMAGE_SIZE = (240, 168)
 PLAYER_SIZE = (BLOCKSIZE[0], BLOCKSIZE[1]*2)
+FONTSIZE = 20
 
 # Padding
 LEVEL_IMAGE_BUTTON_PADDING = EDGE_LEVEL_IMAGE_PADDING = 16
 LEVEL_2_LEVEL_PADDING = 24
+INSTRUCTION_MENU_PADDING = 10
 
 #Misc
 EXIT = "exit"
@@ -30,6 +32,7 @@ MENU = "menu"
 SETTINGSCREEN = "setting screen"
 GAMEMENU = "game menu"
 GAMESCREEN = "game screen"
+INSTRUCTIONSCREEN = "instruction screen"
 
 #Status Code
 SCREENTOSETTING = "change to setting screen"
@@ -37,6 +40,7 @@ SCREENTOGAMEMENU = "change to game menu screen"
 CLOSEGAMEMENU = "close game menu screen"
 CLOSEGAME = "close game"
 EXITGAME = "exit game"
+SCREENTOINSTRUCTION = "change to instruction screen"
 
 # Camera
 PLAYER_LEFT_PADDING =  50

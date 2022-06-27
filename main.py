@@ -1,14 +1,7 @@
-from re import L
-import pygame, math
+import pygame, math, sys
 from helper import *
 from mario import Game
-
-#Global constant
-SIZE = (800,500)
-SKYBLUE = (91, 148, 251)
-EXIT = "exit"
-SETTINGS = (80,80)
-NUMOFLEVELS = 3
+from constants import *
 
 
 class Main():
@@ -18,100 +11,199 @@ class Main():
         self.screen = pygame.display.set_mode(self.size)
         self.surface = pygame.display.set_caption("Mario")
         self.clock = pygame.time.Clock()
-        self.all_sprites_group = pygame.sprite.Group()
+        self.all_sprites_list = []
+        self.mouseBuffer = MouseBuffer()
+        self.currentScreen = MENU
+
+        # Objects
         self.menu = Menu(self.screen)
-        self.scoreBoard = Scoreboard()
-        player = Player(YELLOW, 10, 10)
-        self.player_group.add(player)
-        self.all_sprites_group.add(player)
-        self.generate(NUMOFINVADERS)
-        self.victory = False
-        self.invader_group_hspeed = 1
-        self.invader_changeDirection = False
+        self.setting = MenuSettingScreen()
+        self.instructionScreen = InstructionScreen()
+        
+        self.all_sprites_list.extend([self.menu, self.setting])
 
-class Level():
+        # Sprite Groups
+        self.status = []
+        
+
+    def keyResponse(self,event):
+        pass
+
+    # Change status (Task pending to do)
+    def mouseResponse(self, position):
+        if self.currentScreen == MENU:
+            self.status = self.menu.mouseInteraction(position, self.status)
+        elif self.currentScreen == SETTINGSCREEN:
+            self.status = self.setting.mouseInteraction(position, self.status)
+        elif self.currentScreen == INSTRUCTIONSCREEN:
+            self.status = self.instructionScreen.mouseInteraction(position, self.status)
     
-    def __init__(self,mapFile):
-        self.size = SIZE
-        self.screen = pygame.display.set_mode(self.size)
-        self.surface = pygame.display.set_caption("Game 1")
-        self.clock = pygame.time.Clock()
-        self.allSpriteGroup = pygame.sprite.Group()
-        self.map = Map(mapFile) 
-        self.events = []
-        self.progress = 0
+    def setCurrentScreen(self, newScreen):
+        self.currentScreen = newScreen
 
+    def initialiseGame(self, level):
+        game = Game(level)
+        game.play()
 
-    def play(self):
-        done =False
-        while not done:
-            self.
+    def readStatus(self):
+        for stat in self.status:
+            # Change to menu screen
+            if stat == SCREENTOSETTING:
+                self.setCurrentScreen(SETTINGSCREEN)
 
-class Game():
+            # Change to setting screen
+            elif stat == SCREENTOGAMEMENU:
+                self.setCurrentScreen(MENU)
 
-    def __init__(self,screen, clock, level = 1):
-        self.size = SIZE
-        self.screen = screen
-        self.clock = clock
-        self.menu = Menu(self.screen,NUMOFLEVELS)
-        self.map = Map("map" +level +".csv")
+            # Initialise game
+            elif check_status_init_level(stat):
+                level = extract_level_from_status_code(stat)
+                self.initialiseGame(level)
 
-    def rungame(self):
+            # Exit game
+            elif stat == EXITGAME:
+                sys.exit()
+
+            # Change to instruction screen
+            elif stat == SCREENTOINSTRUCTION:
+                self.setCurrentScreen(INSTRUCTIONSCREEN)
+
+        self.status = []
+
+    def logic(self):    
+        self.mouseBuffer.logic()
+        pass
+
+    def drawScreen(self):
+        self.screen.fill(BROWN)
+        if self.currentScreen == MENU:
+            self.menu.drawScreen(self.screen)
+        elif self.currentScreen == SETTINGSCREEN:
+            self.setting.drawScreen(self.screen)
+        elif self.currentScreen == INSTRUCTIONSCREEN:
+            self.instructionScreen.drawScreen(self.screen)
+        
+        pygame.display.flip()
+
+    def gameplay(self):
         done = False
         while not done:
 
-            #self.menu.interaction()
-            self.draw()
-    
-    def draw(self):
-        self.map.draw()
-        #self.menu.draw()
+
+            # -- User input and controls
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                self.keyResponse(event)
+                
+            click,_,_ = pygame.mouse.get_pressed()
+            if click == True and not self.mouseBuffer.flag:
+                self.mouseBuffer.tFlag()
+                print("Left click")
+                mouse = pygame.mouse.get_pos()
+                self.mouseResponse(mouse)
+
+            self.readStatus()
+            
+            #--Game logic goes after this comment
+            self.logic()
 
 
+            # -- Screen background is BLACK
+            self.drawScreen()
 
+
+            self.clock.tick(60)
+
+        #Endwhile
+        self.finishScreen()
+
+
+#Menu Screen
 class Menu():
 
-    def __init__(self,screen,numOfLvl):
+    def __init__(self, screen):
+        self.size = SIZE
         self.screen = screen
-        self.menuSpriteGroup = pygame.sprite.SpriteGroup()
-        self.settingButton = SettingButton(*SETTINGS)
+        self.menuSpriteGroup = pygame.sprite.Group()
+        self.levelButtonGroup = pygame.sprite.Group()
+
+        self.settingButton = SettingButton(*SETTINGS_BUTTON_SIZE, (SIZE[0] - 132, 20))
         self.menuSpriteGroup.add(self.settingButton)
-        self.levels = []
-        self.parseLevels(numOfLvl)
         
-    def parseLevels(self,numOfLvl):
-        if numOfLvl == 0:
-            raise ValueError
-        width = SIZE[0]-SETTINGS[0] / 3
-        height = SIZE[1]/(math.ceil(numOfLvl/3))
-        for i in range(numOfLvl):
-            tempLevel = LevelButton(f"Level {i+1}", width, height,(i%3*width,i//3*height))
-            self.levels.append(tempLevel)
-            self.menuSpriteGroup.add(tempLevel)
-        
+        startY = 120 + LEVEL_IMAGE_SIZE[1] + LEVEL_IMAGE_BUTTON_PADDING
+        startX = EDGE_LEVEL_IMAGE_PADDING + (LEVEL_IMAGE_SIZE[0]-LEVEL_BUTTON_SIZE[0])/2
 
 
-    def interaction(self):
+        for lvlNum in range(NUM_OF_LEVELS):
+            levelBut = LevelButton(lvlNum+1, f"Level {lvlNum + 1}",*LEVEL_BUTTON_SIZE,(startX,startY), "images/tempLevelImg.png")
+            self.levelButtonGroup.add(levelBut)
+            self.menuSpriteGroup.add(levelBut)
+            startX += 264
 
-        click,_,_ = pygame.mouse.get_pressed()
-        if click == 1:
-            mouse = pygame.mouse.get_pos()
-    
-    def draw(self):
-        self.menuSpriteGroup.draw()
+    # Return new status
+    def mouseInteraction(self, position, status):
+        for sprite in self.menuSpriteGroup:
+            status = sprite.mouseInteraction(position, status)
+        return status
 
+    def drawScreen(self,screen):
+        self.settingButton.draw(screen)
+        for sprite in self.menuSpriteGroup:
+            sprite.draw(screen)
 
+class LevelButton(Button):
 
-def rungame():
-    pygame.init()
+    def __init__(self,level, name, width, height, position, imageName):
+        super().__init__(width, height, position, imageName)
+        self.name = name
+        self.level = level
 
-    game = Game()
-    game.rungame()
+    def mouseInteraction(self,position, status):
+        if self.rect.collidepoint(position):
+            print("Level button mouse collide")
+            status.extend([create_level_status_code(self.level)])
+        return status
 
-def main():
-    rungame()
+# Ranking Screen
+class RankingScreen():
+
+    def __init__(self):
+        pass
+
+    def mouseInteraction(self,position, status):
+        pass
+
+    def drawScreen(self, screen):
+        pass
+
+# Setting Screen
+class MenuSettingScreen:
+
+    def __init__(self):
+        self.background = Background(648,336,(76, 64), SETTINGSCREENCOLOR)
+        self.closeButton = CloseButton(24,24, (712, 52), SCREENTOGAMEMENU)
+        self.exitButton = QuitGameButton((331, 278))
+        self.controlButton = InstructionButton((331,158))
+        self.gameMenu_sprite_group = [self.background, self.closeButton, self.exitButton,self.controlButton]
+
+    def drawScreen(self, screen):
+        for sprite in self.gameMenu_sprite_group:
+            sprite.draw(screen)
+
+    def mouseInteraction(self,position, status):
+        for sprite in self.gameMenu_sprite_group:
+            status = sprite.mouseInteraction(position, status)
+        return status
+
+    def keyResponse(self,event, status):
+        for sprite in self.gameMenu_sprite_group:
+            status = sprite.keyResponse(event, status)
+        return status
 
 if __name__ == "__main__":
-    #main()
     pygame.init()
+    main = Main()
+    main.gameplay()
+    pygame.quit()
     
