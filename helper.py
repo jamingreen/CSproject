@@ -1,5 +1,4 @@
-import csv, pygame, itertools
-from os import read
+import pygame
 from constants import *
 
 class Button(pygame.sprite.Sprite):
