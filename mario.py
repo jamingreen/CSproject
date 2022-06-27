@@ -153,6 +153,7 @@ class Player(pygame.sprite.Sprite):
             elif event.key == pygame.K_SPACE:
                 self.stop_shooting()
         return status
+
 # 16 x 10 block per map
 class Map:
     
@@ -195,31 +196,6 @@ class Map:
             sprite.draw(screen, cam_pos)
 
 
-class Tile(pygame.sprite.Sprite):
-
-    def __init__(self,position, imgFile):
-        super().__init__()
-        self.x = position[0]
-        self.y = position[1]
-        self.image = pygame.transform.scale(pygame.image.load(imgFile), BLOCKSIZE)
-        self.rect = self.image.get_rect()
-        self.rect.x = self.x
-        self.rect.y = self.y
-
-    def draw(self, screen, cam_pos):
-        screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
-    
-
-class Ground(Tile):
-
-    def __init__(self,position):
-        super().__init__(position, "images/groundTile.png")
-
-class AirTile(Tile):
-    
-    def __init__(self,position):
-        super().__init__(position,"images/airTile.png")
-
 class MenuButton(Button):
 
     def __init__(self,):
@@ -234,7 +210,7 @@ class GameMenuScreen():
 
     def __init__(self):
         self.background = Background(706, 381, (47, 48), YELLOW)
-        self.closeButton = CloseButton(24,24, (741, 36))
+        self.closeButton = CloseButton(24,24, (741, 36), CLOSEGAMEMENU)
         self.quitButton = QuitButton((331, 278))
         self.controlButton = ControlButton((331,158))
         self.gameMenu_sprite_group = [self.background, self.closeButton, self.quitButton,self.controlButton]
@@ -251,34 +227,4 @@ class GameMenuScreen():
     def keyResponse(self,event, status):
         for sprite in self.gameMenu_sprite_group:
             status = sprite.keyResponse(event, status)
-        return status
-
-class CloseButton(Button):
-
-    def __init__(self,width, height, position):
-        super().__init__(width, height, position, "images/closeButton.jpg")
-
-    def mouseInteraction(self, position, status):
-        if self.rect.collidepoint(position):
-            status.extend([CLOSEGAMEMENU])
-        return status
-
-class QuitButton(WordButton):
-
-    def __init__(self, position):
-        super().__init__(140,40, position, (51, 51, 204), WHITE, "Exit Game")
-    
-    def mouseInteraction(self, position, status):
-        if self.rect.collidepoint(position):
-            status.extend([CLOSEGAME])
-        return status
-    
-class ControlButton(WordButton):
-
-    def __init__(self, position):
-        super().__init__(140,40, position, (51, 51, 204), WHITE, "Controls")
-    
-    def mouseInteraction(self, position, status):
-        if self.rect.collidepoint(position):
-            pass
         return status

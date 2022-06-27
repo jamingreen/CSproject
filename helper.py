@@ -31,7 +31,7 @@ class SettingButton(Button):
     def mouseInteraction(self,position, status):
         if self.rect.collidepoint(position):
             print("Setting Button mouse collide")
-            status.extend(SCREENTOSETTING)
+            status.extend([SCREENTOSETTING])
         return status
     
 
@@ -117,3 +117,69 @@ class Background(pygame.sprite.Sprite):
 
     def keyResponse(self,event,status):
         return status
+
+class CloseButton(Button):
+
+    def __init__(self,width, height, position, statusCode):
+        super().__init__(width, height, position, "images/closeButton.jpg")
+        self.statusCode = statusCode
+
+    def mouseInteraction(self, position, status):
+        if self.rect.collidepoint(position):
+            status.extend([self.statusCode])
+        return status
+
+class QuitButton(WordButton):
+
+    def __init__(self, position):
+        super().__init__(140,40, position, (51, 51, 204), WHITE, "Exit Game")
+    
+    def mouseInteraction(self, position, status):
+        if self.rect.collidepoint(position):
+            status.extend([CLOSEGAME])
+        return status
+    
+class ControlButton(WordButton):
+
+    def __init__(self, position):
+        super().__init__(140,40, position, (51, 51, 204), WHITE, "Controls")
+    
+    def mouseInteraction(self, position, status):
+        if self.rect.collidepoint(position):
+            pass
+        return status
+
+class QuitGameButton(WordButton):
+
+    def __init__(self, position):
+        super().__init__(140, 40, position, (51, 51, 204), WHITE, "Quit Game") 
+
+    def mouseInteraction(self, position, status):
+        if self.rect.collidepoint(position):
+            status.extend([EXITGAME])
+        return status
+
+class Tile(pygame.sprite.Sprite):
+
+    def __init__(self,position, imgFile):
+        super().__init__()
+        self.x = position[0]
+        self.y = position[1]
+        self.image = pygame.transform.scale(pygame.image.load(imgFile), BLOCKSIZE)
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+    def draw(self, screen, cam_pos):
+        screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
+    
+
+class Ground(Tile):
+
+    def __init__(self,position):
+        super().__init__(position, "images/groundTile.png")
+
+class AirTile(Tile):
+    
+    def __init__(self,position):
+        super().__init__(position,"images/airTile.png")

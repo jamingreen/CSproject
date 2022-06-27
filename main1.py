@@ -16,10 +16,11 @@ class Main():
         self.all_sprites_list = []
         self.mouseBuffer = MouseBuffer()
         self.currentScreen = MENU
+        #self.settingScreen = MenuSettingScreen()
 
         # Objects
         self.menu = Menu(self.screen)
-        self.setting = Setting()
+        self.setting = MenuSettingScreen()
         
         self.all_sprites_list.extend([self.menu, self.setting])
 
@@ -48,9 +49,13 @@ class Main():
         for stat in self.status:
             if stat == SCREENTOSETTING:
                 self.setCurrentScreen(SETTINGSCREEN)
+            elif stat == SCREENTOGAMEMENU:
+                self.setCurrentScreen(MENU)
             elif check_status_init_level(stat):
                 level = extract_level_from_status_code(stat)
                 self.initialiseGame(level)
+            elif stat == EXITGAME:
+                sys.exit()
         self.status = []
 
     def logic(self):    
@@ -84,7 +89,9 @@ class Main():
                 mouse = pygame.mouse.get_pos()
                 self.mouseResponse(mouse)
 
+            print(self.status)
             self.readStatus()
+            
             #--Game logic goes after this comment
             self.logic()
 
@@ -145,19 +152,6 @@ class LevelButton(Button):
             status.extend([create_level_status_code(self.level)])
         return status
 
-# Setting Screen
-class Setting():
-
-    def __init__(self):
-        pass
-    
-
-    def mouseInteraction(self,position, status):
-        pass
-
-    def drawScreen(self, screen):
-        pass
-
 # Ranking Screen
 class RankingScreen():
 
@@ -169,6 +163,41 @@ class RankingScreen():
 
     def drawScreen(self, screen):
         pass
+
+# Setting Screen
+class MenuSettingScreen:
+
+    def __init__(self):
+        self.background = Background(648,336,(76, 64), SETTINGSCREENCOLOR)
+        self.closeButton = CloseButton(24,24, (712, 52), SCREENTOGAMEMENU)
+        self.exitButton = QuitGameButton((331, 278))
+        self.controlButton = ControlButton((331,158))
+        self.gameMenu_sprite_group = [self.background, self.closeButton, self.exitButton,self.controlButton]
+
+    def drawScreen(self, screen):
+        for sprite in self.gameMenu_sprite_group:
+            sprite.draw(screen)
+
+    def mouseInteraction(self,position, status):
+        for sprite in self.gameMenu_sprite_group:
+            status = sprite.mouseInteraction(position, status)
+        return status
+
+    def keyResponse(self,event, status):
+        for sprite in self.gameMenu_sprite_group:
+            status = sprite.keyResponse(event, status)
+        return status
+
+class InstructionScreen():
+
+    def __init__(self):
+        pass
+
+    def mouseInteraction(self, position, status):
+        return status
+
+    def keyResponse(self,event,status):
+        return status
 
 if __name__ == "__main__":
     pygame.init()

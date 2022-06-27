@@ -7,6 +7,7 @@ LIGHTGREY = (213, 216, 220)
 BLACK = (0, 0, 0)
 YELLOW = (251,208,0)
 WHITE = (255,255,255)
+SETTINGSCREENCOLOR = (144, 212, 204)
 
 #Size
 SIZE = (800,500)
@@ -35,6 +36,7 @@ SCREENTOSETTING = "change to setting screen"
 SCREENTOGAMEMENU = "change to game menu screen"
 CLOSEGAMEMENU = "close game menu screen"
 CLOSEGAME = "close game"
+EXITGAME = "exit game"
 
 # Camera
 PLAYER_LEFT_PADDING =  50
@@ -57,10 +59,7 @@ def create_level_status_code(level):
     return f"Initialise Level {level}"
 
 def check_status_init_level(string):
-    if re.match("^Initialise Level", string):
-        return True
-    else:
-        return False
+    return bool(re.match("^Initialise Level.+[0-9]+$", string))
 
 def extract_level_from_status_code(status_code):
     if not create_level_status_code(status_code):
