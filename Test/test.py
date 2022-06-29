@@ -1,33 +1,27 @@
-import pygame,math
-import helper_test as ht
+class A:
+    def __init__(self):
+        self.a = 123
 
+    def afunc(self):
+        self.a = 234
 
-RED = (255,0,0)
-BLACK = (0,0,0)
-SIZE = width, height = (800, 500)
-angle = 1
+class B:
 
-pygame.init()
+    def __init__(self):
+        self.b = 456
+        self.a = "A"
 
-screen = pygame.display.set_mode(SIZE)
+    def bfunc(self):
+        self.b  = 567
 
-clock = pygame.time.Clock()
-img = pygame.transform.scale(pygame.image.load("invader2.png"), (50,50))
-imgPos = (300,200)
+class C(A, B):
+    def __init__(self):
+        A.__init__(self)
+        B.__init__(self)
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            exit()
-
-
-    screen.fill(BLACK)
-    rImg, origin = ht.rotateImg(screen,img,imgPos,(0,0),1)
-    pygame.draw.circle(screen,RED,(300,200),10)
-    for i in range(16):
-        pygame.draw.rect(screen,RED,(i*50,450, 50,50))
-    pygame.display.flip()
-
-    clock.tick(60)
-
-    
+c = C()
+print(c.a)
+print(c.b)
+c.afunc()
+c.bfunc()
+print(c.a,c.b)

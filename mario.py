@@ -16,10 +16,11 @@ class Game:
         self.level = level
         self.menu_button = MenuButton()
         self.status = []
-        self.openMenu = False
         self.menuScreen = GameMenuScreen()
         self.done = False
         self.mouseBuffer = MouseBuffer()
+        self.instruction_screen = InstructionScreen(RETURNTOGAME)
+        self.currentScreen = GAME
 
         self.gameSpriteGroup = []
 
@@ -29,32 +30,39 @@ class Game:
         self.gameSpriteGroup.extend([self.player, self.map, self.menu_button])
 
     def keyResponse(self, event):
-        if self.openMenu:
+        if self.currentScreen == GAMEMENU:
             self.status = self.menuScreen.keyResponse(event,self.status)
-        else:
+        elif self.currentScreen == INSTRUCTIONSCREEN:
+            self.status = self.instruction_screen.keyResponse(event, self.status)
+        elif self.currentScreen == GAME:
             self.status = self.player.keyResponse(event, self.status)
 
     def mouseResponse(self, position):
         self.status = self.menu_button.mouseInteraction(position, self.status)
-        if self.openMenu:
+        if self.currentScreen == GAMEMENU:
             self.status = self.menuScreen.mouseInteraction(position, self.status)
+        elif self.currentScreen == INSTRUCTIONSCREEN:
+            self.status = self.instruction_screen.mouseInteraction(position, self.status)
 
     def readStatus(self):
         for stat in self.status:
             if stat == SCREENTOGAMEMENU:
-                self.openMenu = True
+                self.currentScreen = GAMEMENU
             elif stat == CLOSEGAME:
                 self.done = True
-            elif stat == CLOSEGAMEMENU:
-                self.openMenu = False
+            elif stat == RETURNTOGAME:
+                self.currentScreen = GAME
+            elif stat == SCREENTOINSTRUCTION:
+                self.currentScreen = INSTRUCTIONSCREEN
         self.status = []
 
             
     def logic(self):
         self.readStatus()
         self.mouseBuffer.logic()
-        self.player.update()
-        self.camera.scroll()
+        if self.currentScreen == GAME:
+            self.player.update(self.map.tileGroup)
+            self.camera.scroll()
 
     def drawScreen(self):
         self.screen.fill(SKYBLUE)
@@ -64,8 +72,10 @@ class Game:
             sprite.draw(self.screen, self.camera.position)
         
         # Draw menu screen on top
-        if self.openMenu:
+        if self.currentScreen == GAMEMENU:
             self.menuScreen.drawScreen(self.screen)
+        elif self.currentScreen == INSTRUCTIONSCREEN:
+            self.instruction_screen.drawScreen(self.screen)
 
         pygame.display.flip()
 
@@ -90,7 +100,7 @@ class Game:
 
             # -- Screen background is BLACK
             self.drawScreen()
-
+            print("_____________")
             self.clock.tick(60)
 
 
@@ -108,6 +118,7 @@ class Player(pygame.sprite.Sprite):
         self.left_border = vertices[0]
         self.right_border = vertices[1] - PLAYER_SIZE[0] # right most of the map
         self.horizonal_max_speed = horizonal_max_speed
+        self.on_ground = True
     
     def draw(self, screen, cam_position):
         screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
@@ -122,19 +133,56 @@ class Player(pygame.sprite.Sprite):
         pass
 
     def jump(self): 
-        self.ySpeed = -JUMP_SPEED
+        if self.on_ground:
+            self.on_ground = False
+            self.ySpeed = -JUMP_SPEED
 
     def jumpBuffer(self):
         pass
 
-    def update(self):
+    def movementX(self):
         self.rect.x += self.xSpeed
+
+        # boarder collision
         self.rect.x = min(self.rect.x, self.right_border)
         self.rect.x = max(self.rect.x, self.left_border)
+    
+    def movementY(self):
         self.rect.y += self.ySpeed
         self.ySpeed += GRAVITY
-        # Require change to tile based
-        self.rect.y = min(self.rect.y, 350)
+        
+    def collisionX(self, tiles):
+
+        # move right
+        if self.xSpeed > 0:
+            for tile in tiles:
+                self.rect.x = min(tile.rect.x - PLAYER_SIZE[0], self.rect.x)
+        elif self.xSpeed < 0:
+            for tile in tiles:
+                self.rect.x = max(tile.rect.right, self.rect.x)
+
+    def collisionY(self, tiles):
+        if self.ySpeed > 0:
+            self.on_ground = True
+            for tile in tiles:
+                self.rect.y = min(tile.rect.top - PLAYER_SIZE[1], self.rect.y)
+
+        elif self.ySpeed < 0:
+            for tile in tiles:
+                self.rect.y = max(tile.rect.bottom, self.rect.y)
+        self.ySpeed = 0
+
+
+    def update(self, tiles):
+        self.movementX()
+        collided_tiles = pygame.sprite.spritecollide(self, tiles, False)
+        if len(collided_tiles) != 0:
+            self.collisionX(collided_tiles)
+        
+        self.movementY()
+        collided_tiles = pygame.sprite.spritecollide(self, tiles, False)
+        if len(collided_tiles) != 0:
+            self.collisionY(collided_tiles)
 
     def keyResponse(self,event, status):
         if event.type == pygame.KEYDOWN:
@@ -210,10 +258,10 @@ class GameMenuScreen():
 
     def __init__(self):
         self.background = Background(706, 381, (47, 48), YELLOW)
-        self.closeButton = CloseButton(24,24, (741, 36), CLOSEGAMEMENU)
+        self.closeButton = CloseButton(24,24, (741, 36), RETURNTOGAME)
         self.quitButton = QuitButton((331, 278))
         self.controlButton = InstructionButton((331,158))
-        self.gameMenu_sprite_group = [self.background, self.closeButton, self.quitButton,self.controlButton]
+        self.gameMenu_sprite_group = [self.background, self.closeButton, self.quitButton,self.controlButton, self.controlButton]
 
     def drawScreen(self, screen):
         for sprite in self.gameMenu_sprite_group:

@@ -4,7 +4,7 @@ from mario import Game
 from constants import *
 
 
-class Main():
+class Main:
 
     def __init__(self):
         self.size = SIZE
@@ -18,7 +18,7 @@ class Main():
         # Objects
         self.menu = Menu(self.screen)
         self.setting = MenuSettingScreen()
-        self.instructionScreen = InstructionScreen()
+        self.instructionScreen = InstructionScreen(SCREENTOGAMEMENU)
         
         self.all_sprites_list.extend([self.menu, self.setting])
 

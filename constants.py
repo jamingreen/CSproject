@@ -30,14 +30,15 @@ NUM_OF_LEVELS = 3
 #Screens
 MENU = "menu"
 SETTINGSCREEN = "setting screen"
-GAMEMENU = "game menu"
 GAMESCREEN = "game screen"
 INSTRUCTIONSCREEN = "instruction screen"
+GAMEMENU = "game menu"
+GAME = "game"
 
 #Status Code
 SCREENTOSETTING = "change to setting screen"
 SCREENTOGAMEMENU = "change to game menu screen"
-CLOSEGAMEMENU = "close game menu screen"
+RETURNTOGAME = "close game menu screen"
 CLOSEGAME = "close game"
 EXITGAME = "exit game"
 SCREENTOINSTRUCTION = "change to instruction screen"
@@ -55,21 +56,3 @@ GRAVITY = 5
 MENU_BUTTON_PADDING = 20
 
 
-
-
-
-# Level status code
-def create_level_status_code(level):
-    return f"Initialise Level {level}"
-
-def check_status_init_level(string):
-    return bool(re.match("^Initialise Level.+[0-9]+$", string))
-
-def extract_level_from_status_code(status_code):
-    if not create_level_status_code(status_code):
-        return None
-    try:
-        return int(status_code.split(" ")[-1])
-
-    except ValueError:
-        return None

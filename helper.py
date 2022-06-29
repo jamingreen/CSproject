@@ -1,7 +1,8 @@
 import pygame
 from constants import *
+from abc import ABC, abstractmethod
 
-class Button(pygame.sprite.Sprite):
+class Button(pygame.sprite.Sprite, ABC):
 
     def __init__(self,width, height, position, imageName):
         pygame.sprite.Sprite.__init__(self)
@@ -10,6 +11,7 @@ class Button(pygame.sprite.Sprite):
         self.rect.x = position[0]
         self.rect.y = position[1]
 
+    @abstractmethod
     def mouseInteraction(self,position, status):
         if self.rect.collidepoint(position):
             pass
@@ -34,12 +36,7 @@ class SettingButton(Button):
         return status
     
 
-def relativeCoor2DeCoor(relativePosition):
-    return (relativePosition[0]*BLOCKSIZE[0], relativePosition[1]*BLOCKSIZE[1])
 
-def deCoor2RelativeCoor(dePosition):
-    return (dePosition[0]/BLOCKSIZE[0], dePosition[1]/BLOCKSIZE[1])
-    
 
 class MouseBuffer():
 
@@ -64,22 +61,7 @@ class MouseBuffer():
     def count(self):
         self.timer +=1
 
-#Apply a function to items in a list with optional arguments
-def apply(list, func, **args):
-    result = []
-    argument = ""
-    for key, value in args.items():
-        argument = argument + ", " + str(key) +"="+str(value)
-    argument = argument + ")"
-    for i in list:
-        com = f"x = {func}({ i }" + argument
-        loc = {}
-        exec(f"{com}",globals(),loc)
-        x = loc["x"]
-        result.append(x)
-    return result
-
-class WordButton():
+class WordButton(ABC):
 
     def __init__(self,width, height, position, color, textColor, txt):
         super().__init__()
@@ -90,6 +72,7 @@ class WordButton():
         fontSize = self.txt.get_size()
         self.txt_pos = (position[0] + (width - fontSize[0])/2, position[1] + (height - fontSize[1])/2)
 
+    @abstractmethod
     def mouseInteraction(self,position, status):
         return status
 
@@ -146,6 +129,7 @@ class InstructionButton(WordButton):
     
     def mouseInteraction(self, position, status):
         if self.rect.collidepoint(position):
+            print("Instruction clicked")
             status.append(SCREENTOINSTRUCTION)
         return status
 
@@ -186,7 +170,7 @@ class AirTile(Tile):
 
 class InstructionScreen():
 
-    def __init__(self):
+    def __init__(self, closeStatusCode):
         self.instructions = [
             " 'A' key for going to the left ",
             " 'D' key for going to the right",
@@ -203,7 +187,7 @@ class InstructionScreen():
             start_y += fontSize[1] + INSTRUCTION_MENU_PADDING * 2
             self.fonts.append((txt,txt_pos))
         self.background = Background(648,336,(76, 64), SETTINGSCREENCOLOR)
-        self.closeButton = CloseButton(24,24, (712, 52), SCREENTOGAMEMENU)
+        self.closeButton = CloseButton(24,24, (712, 52), closeStatusCode)
         self.instruction_sprite_group = [self.background, self.closeButton]
 
     def mouseInteraction(self, position, status):
@@ -217,4 +201,42 @@ class InstructionScreen():
             sprite.draw(screen)
         for txt, txt_pos in self.fonts:
             screen.blit(txt, txt_pos)
-        
+
+
+def relativeCoor2DeCoor(relativePosition):
+    return (relativePosition[0]*BLOCKSIZE[0], relativePosition[1]*BLOCKSIZE[1])
+
+def deCoor2RelativeCoor(dePosition):
+    return (dePosition[0]/BLOCKSIZE[0], dePosition[1]/BLOCKSIZE[1])
+            
+
+#Apply a function to items in a list with optional arguments
+def apply(list, func, **args):
+    result = []
+    argument = ""
+    for key, value in args.items():
+        argument = argument + ", " + str(key) +"="+str(value)
+    argument = argument + ")"
+    for i in list:
+        com = f"x = {func}({ i }" + argument
+        loc = {}
+        exec(f"{com}",globals(),loc)
+        x = loc["x"]
+        result.append(x)
+    return result
+
+# Level status code
+def create_level_status_code(level):
+    return f"Initialise Level {level}"
+
+def check_status_init_level(string):
+    return bool(re.match("^(Initialise Level)\s\-?[0-9]+$", string))
+
+def extract_level_from_status_code(status_code):
+    if not create_level_status_code(status_code):
+        return None
+    try:
+        return int(status_code.split(" ")[-1])
+
+    except ValueError:
+        return None
