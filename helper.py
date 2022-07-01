@@ -202,6 +202,17 @@ class InstructionScreen():
         for txt, txt_pos in self.fonts:
             screen.blit(txt, txt_pos)
 
+class RestartButton(WordButton):
+
+    def __init__(self, position):
+        super().__init__(140,40, position, (51, 51, 204), WHITE, "Restart")
+    
+    def mouseInteraction(self, position, status):
+        if self.rect.collidepoint(position):
+            status.extend([RESTARTGAME])
+        return status
+
+
 
 def relativeCoor2DeCoor(relativePosition):
     return (relativePosition[0]*BLOCKSIZE[0], relativePosition[1]*BLOCKSIZE[1])

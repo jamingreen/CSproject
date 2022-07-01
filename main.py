@@ -42,8 +42,11 @@ class Main:
         self.currentScreen = newScreen
 
     def initialiseGame(self, level):
-        game = Game(level)
-        game.play()
+        restart = True  
+        while restart:
+            game = Game(level)
+            restart = game.play()
+
 
     def readStatus(self):
         for stat in self.status:

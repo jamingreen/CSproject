@@ -1,4 +1,9 @@
 type, startingX, startingY, widthSize, heightSize
-0, 1600, 0, 500
-ground, 0, 9, 32, 1
-airTile, 4, 6, 3, 1
+0, 3400, 0, 500
+barrier, 0, 11, 100,3
+ground, 0, 9, 15, 1
+ground, 18, 9, 50, 1
+airTile, 4, 6, 4, 1
+airTile, 7, 3, 4, 1
+airTile, 15, 7, 5,1
+ground, 30, 6, 1, 5

@@ -4,8 +4,6 @@ from constants import *
 from camera import *
 from helper import *
 
-PLAYERSTARTPOS = (BLOCKSIZE[0],BLOCKSIZE[1] * 7 )
-
 class Game:
     
     def __init__(self, level = 1):
@@ -21,6 +19,7 @@ class Game:
         self.mouseBuffer = MouseBuffer()
         self.instruction_screen = InstructionScreen(RETURNTOGAME)
         self.currentScreen = GAME
+        self.restart = False
 
         self.gameSpriteGroup = []
 
@@ -54,6 +53,9 @@ class Game:
                 self.currentScreen = GAME
             elif stat == SCREENTOINSTRUCTION:
                 self.currentScreen = INSTRUCTIONSCREEN
+            elif stat == RESTARTGAME:
+                self.done = True
+                self.restart = True
         self.status = []
 
             
@@ -61,7 +63,9 @@ class Game:
         self.readStatus()
         self.mouseBuffer.logic()
         if self.currentScreen == GAME:
-            self.player.update(self.map.tileGroup)
+            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status)
+            if temp != None:
+                self.status.append(temp)
             self.camera.scroll()
 
     def drawScreen(self):
@@ -98,12 +102,10 @@ class Game:
             #--Game logic goes after this comment
             self.logic()
 
-            # -- Screen background is BLACK
             self.drawScreen()
             print("_____________")
             self.clock.tick(60)
-
-
+        return self.restart
 
 class Player(pygame.sprite.Sprite):
     
@@ -119,6 +121,7 @@ class Player(pygame.sprite.Sprite):
         self.right_border = vertices[1] - PLAYER_SIZE[0] # right most of the map
         self.horizonal_max_speed = horizonal_max_speed
         self.on_ground = True
+        self.health = 100
     
     def draw(self, screen, cam_position):
         screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
@@ -134,6 +137,11 @@ class Player(pygame.sprite.Sprite):
 
     def jump(self): 
         if self.on_ground:
+            self.jump_num = 1
+            self.on_ground = False
+            self.ySpeed = -JUMP_SPEED
+        elif self.jump_num > 0:
+            self.jump_num -= 1
             self.on_ground = False
             self.ySpeed = -JUMP_SPEED
 
@@ -173,7 +181,7 @@ class Player(pygame.sprite.Sprite):
         self.ySpeed = 0
 
 
-    def update(self, tiles):
+    def update(self, tiles, dead_zone, status):
         self.movementX()
         collided_tiles = pygame.sprite.spritecollide(self, tiles, False)
         if len(collided_tiles) != 0:
@@ -183,6 +191,21 @@ class Player(pygame.sprite.Sprite):
         collided_tiles = pygame.sprite.spritecollide(self, tiles, False)
         if len(collided_tiles) != 0:
             self.collisionY(collided_tiles)
+
+        self.check_dead_zone(dead_zone)
+        return self.checkdeath()
+        
+
+    def check_dead_zone(self,dead_zone):
+        for dead in dead_zone:
+            if self.rect.x >= dead[0] and self.rect.x <= dead[0] + dead[2] and self.rect.y >= dead[1] and self.rect.y <= dead[1] + dead[3]:
+                self.health -= 1000
+                print("death")
+
+    def checkdeath(self):
+        if self.health <= 0:
+            return SCREENTOGAMEMENU
+
 
     def keyResponse(self,event, status):
         if event.type == pygame.KEYDOWN:
@@ -218,7 +241,9 @@ class Map:
         
         self.groundSpriteGroup = pygame.sprite.Group()
         self.tileGroup = pygame.sprite.Group()
+        self.dead_zone = []
         self.parseMap(temp)
+
         
 
     def parseMap(self,tiles):
@@ -238,6 +263,8 @@ class Map:
                     for j in range(height):
                         airTile = AirTile((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
                         self.tileGroup.add(airTile)
+            elif row[0] == "barrier":
+                self.dead_zone.append((*dePos, width*BLOCKSIZE[0], height*BLOCKSIZE[1]))
 
     def draw(self,screen, cam_pos):
         for sprite in self.tileGroup:
@@ -259,9 +286,10 @@ class GameMenuScreen():
     def __init__(self):
         self.background = Background(706, 381, (47, 48), YELLOW)
         self.closeButton = CloseButton(24,24, (741, 36), RETURNTOGAME)
-        self.quitButton = QuitButton((331, 278))
-        self.controlButton = InstructionButton((331,158))
-        self.gameMenu_sprite_group = [self.background, self.closeButton, self.quitButton,self.controlButton, self.controlButton]
+        self.quitButton = QuitButton((331, 306))
+        self.controlButton = InstructionButton((331,118))
+        self.restartButton = RestartButton((331, 212))
+        self.gameMenu_sprite_group = [self.background, self.closeButton, self.quitButton,self.controlButton, self.controlButton, self.restartButton]
 
     def drawScreen(self, screen):
         for sprite in self.gameMenu_sprite_group:
