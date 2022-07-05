@@ -7,6 +7,8 @@ LIGHTGREY = (213, 216, 220)
 BLACK = (0, 0, 0)
 YELLOW = (251,208,0)
 WHITE = (255,255,255)
+GOLD = (212, 175, 55)
+DARKBLUE = (0, 0, 139)
 SETTINGSCREENCOLOR = (144, 212, 204)
 
 #Size
@@ -34,6 +36,7 @@ GAMESCREEN = "game screen"
 INSTRUCTIONSCREEN = "instruction screen"
 GAMEMENU = "game menu"
 GAME = "game"
+DEATHSCREEN = "death screen"
 
 #Status Code
 SCREENTOSETTING = "change to setting screen"
@@ -43,6 +46,7 @@ CLOSEGAME = "close game"
 EXITGAME = "exit game"
 SCREENTOINSTRUCTION = "change to instruction screen"
 RESTARTGAME = "restart game"
+PLAYERDEATH = "player death"
 
 # Camera
 PLAYER_LEFT_PADDING =  150

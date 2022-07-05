@@ -1,5 +1,6 @@
 import pygame, math, sys, csv
 from pygame import math
+from sqlalchemy import false
 from constants import *
 from camera import *
 from helper import *
@@ -20,6 +21,10 @@ class Game:
         self.instruction_screen = InstructionScreen(RETURNTOGAME)
         self.currentScreen = GAME
         self.restart = False
+        self.death_text = DeathText()
+        self.death_count = 0
+        self.death_count_start = False
+        
 
         self.gameSpriteGroup = []
 
@@ -48,6 +53,12 @@ class Game:
             temp = Goomba(position, x_boundary, y_boundary)
             self.enemy_sprite_group.append(temp)
 
+    def gameResponse(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RETURN and self.death_count_start:
+                self.done = True
+                self.restart = True
+
     def keyResponse(self, event):
         if self.currentScreen == GAMEMENU:
             self.status = self.menuScreen.keyResponse(event,self.status)
@@ -55,6 +66,7 @@ class Game:
             self.status = self.instruction_screen.keyResponse(event, self.status)
         elif self.currentScreen == GAME:
             self.status = self.player.keyResponse(event, self.status)
+        self.gameResponse(event)
 
     def mouseResponse(self, position):
         self.status = self.menu_button.mouseInteraction(position, self.status)
@@ -76,14 +88,18 @@ class Game:
             elif stat == RESTARTGAME:
                 self.done = True
                 self.restart = True
+            elif stat == PLAYERDEATH:
+                self.currentScreen = DEATHSCREEN
+                self.death_count_start = True
         self.status = []
 
             
     def logic(self):
         self.readStatus()
         self.mouseBuffer.logic()
+        self.playerdeath()
         if self.currentScreen == GAME:
-            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status)
+            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status,self.enemy_sprite_group)
             if temp != None:
                 self.status.append(temp)
             self.camera.scroll()
@@ -103,9 +119,17 @@ class Game:
             self.menuScreen.drawScreen(self.screen)
         elif self.currentScreen == INSTRUCTIONSCREEN:
             self.instruction_screen.drawScreen(self.screen)
+        elif self.currentScreen == DEATHSCREEN:
+            self.death_text.draw(self.screen)
 
         pygame.display.flip()
 
+    def playerdeath(self):
+        if self.death_count_start:
+            self.death_count +=1
+        if self.death_count >= 200:
+            self.done = True
+            self.restart = True
 
     def play(self):
         self.done = False
@@ -203,8 +227,15 @@ class Player(pygame.sprite.Sprite):
                 self.rect.y = max(tile.rect.bottom, self.rect.y)
         self.ySpeed = 0
 
+    def enemy_interaction(self,enemy_sprite_group):
+        for enemy in enemy_sprite_group:
+            if type(enemy) == Goomba:
+                if pygame.sprite.collide_rect(self, enemy):
+                    return PLAYERDEATH
+        return None
 
-    def update(self, tiles, dead_zone, status):
+    def update(self, tiles, dead_zone, status, enemy_sprite_group):
+        death = False
         self.movementX()
         collided_tiles = pygame.sprite.spritecollide(self, tiles, False)
         if len(collided_tiles) != 0:
@@ -216,19 +247,24 @@ class Player(pygame.sprite.Sprite):
             self.collisionY(collided_tiles)
 
         self.check_dead_zone(dead_zone)
-        return self.checkdeath()
+        death = self.checkdeath()
+
+        temp = self.enemy_interaction(enemy_sprite_group)
+        if temp != None:
+            death = temp
+
+        return death
         
 
     def check_dead_zone(self,dead_zone):
         for dead in dead_zone:
             if self.rect.x >= dead[0] and self.rect.x <= dead[0] + dead[2] and self.rect.y >= dead[1] and self.rect.y <= dead[1] + dead[3]:
                 self.health -= 1000
-                print("death")
 
     def checkdeath(self):
         if self.health <= 0:
             self.respawn()
-            return SCREENTOGAMEMENU
+            return PLAYERDEATH
 
     def respawn(self):
         pass
@@ -361,3 +397,14 @@ class Goomba(Enemy):
 
     def __init__(self, position, x_boundary, y_boundary):
         super().__init__(position, x_boundary, y_boundary, "images/goomba.png", GOOMBA_SIZE)
+
+class DeathText():
+
+    def __init__(self):
+        font = pygame.font.Font("freesansbold.ttf", 100)
+        self.txt = font.render("Defeated", True, DARKBLUE)
+        fontSize = self.txt.get_size()
+        self.txt_pos = (182, 130)
+
+    def draw(self,screen):
+        screen.blit(self.txt, self.txt_pos)
