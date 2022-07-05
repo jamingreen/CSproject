@@ -23,6 +23,8 @@ class Button(pygame.sprite.Sprite, ABC):
     def draw(self,screen, cam_pos = pygame.math.Vector2(0,0)):
         screen.blit(self.image, (self.rect.x,self.rect.y))
 
+    def update(self):
+        pass
 
 class SettingButton(Button):
 
@@ -212,10 +214,14 @@ class RestartButton(WordButton):
             status.extend([RESTARTGAME])
         return status
 
+def xReToDe(x_pos):
+    return int(x_pos)*BLOCKSIZE[0]
 
+def yReToDe(y_pos):
+    return int(y_pos)*BLOCKSIZE[1]
 
 def relativeCoor2DeCoor(relativePosition):
-    return (relativePosition[0]*BLOCKSIZE[0], relativePosition[1]*BLOCKSIZE[1])
+    return (xReToDe(relativePosition[0]), yReToDe(relativePosition[1]))
 
 def deCoor2RelativeCoor(dePosition):
     return (dePosition[0]/BLOCKSIZE[0], dePosition[1]/BLOCKSIZE[1])

@@ -25,8 +25,28 @@ class Game:
 
         self.player = Player(HORIZONAL_MAX_SPEED, self.map.vertices)
         self.camera = Camera(self.player, self.map.vertices)
+        self.enemy_sprite_group = []
 
         self.gameSpriteGroup.extend([self.player, self.map, self.menu_button])
+
+        self.parseEntities("entity"+str(level)+".csv")
+
+    def parseEntities(self, filename):
+        with open(filename, 'r') as f:
+            reader =  csv.reader(f)
+            next(reader)
+
+            for row in reader:
+                self.create_enemies(row)
+        self.gameSpriteGroup.extend(self.enemy_sprite_group)
+
+    def create_enemies(self, row):
+        position = relativeCoor2DeCoor((int(row[1]), int(row[2])))
+        x_boundary = tuple(apply(row[3].split("|"), "xReToDe"))
+        y_boundary = tuple(apply(row[4].split("|"), "yReToDe"))
+        if row[0] == "goomba":
+            temp = Goomba(position, x_boundary, y_boundary)
+            self.enemy_sprite_group.append(temp)
 
     def keyResponse(self, event):
         if self.currentScreen == GAMEMENU:
@@ -67,6 +87,9 @@ class Game:
             if temp != None:
                 self.status.append(temp)
             self.camera.scroll()
+
+            for enemy in self.enemy_sprite_group:
+                enemy.update()
 
     def drawScreen(self):
         self.screen.fill(SKYBLUE)
@@ -140,10 +163,10 @@ class Player(pygame.sprite.Sprite):
             self.jump_num = 1
             self.on_ground = False
             self.ySpeed = -JUMP_SPEED
-        elif self.jump_num > 0:
+        """elif self.jump_num > 0:
             self.jump_num -= 1
             self.on_ground = False
-            self.ySpeed = -JUMP_SPEED
+            self.ySpeed = -JUMP_SPEED"""
 
     def jumpBuffer(self):
         pass
@@ -204,8 +227,11 @@ class Player(pygame.sprite.Sprite):
 
     def checkdeath(self):
         if self.health <= 0:
+            self.respawn()
             return SCREENTOGAMEMENU
 
+    def respawn(self):
+        pass
 
     def keyResponse(self,event, status):
         if event.type == pygame.KEYDOWN:
@@ -228,47 +254,46 @@ class Player(pygame.sprite.Sprite):
 # 16 x 10 block per map
 class Map:
     
-    def __init__(self, filename):
-        temp = []
-        with open(filename, 'r') as f:
+    def __init__(self, map_file_name):
+        self.groundSpriteGroup = pygame.sprite.Group()
+        self.tileGroup = pygame.sprite.Group()
+        self.dead_zone = []
+
+        with open(map_file_name, 'r') as f:
             reader =  csv.reader(f)
             next(reader)
             
             self.vertices = apply(next(reader), "int") # min x, max x, min y, max y
 
             for row in reader:
-                temp.append(tuple(row))
-        
-        self.groundSpriteGroup = pygame.sprite.Group()
-        self.tileGroup = pygame.sprite.Group()
-        self.dead_zone = []
-        self.parseMap(temp)
-
+                self.parseMap(row)
         
 
-    def parseMap(self,tiles):
-        for row in tiles:
-            relPos = (int(row[1]), int(row[2]))
-            dePos = relativeCoor2DeCoor(relPos)
-            width = int(row[3])
-            height = int(row[4])
-            if row[0] == "ground":
-                for i in range(width):
-                    for j in range(height):
-                        groundTile = Ground((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
-                        self.groundSpriteGroup.add(groundTile)
-                        self.tileGroup.add(groundTile)
-            elif row[0] == "airTile":
-                for i in range(width):
-                    for j in range(height):
-                        airTile = AirTile((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
-                        self.tileGroup.add(airTile)
-            elif row[0] == "barrier":
-                self.dead_zone.append((*dePos, width*BLOCKSIZE[0], height*BLOCKSIZE[1]))
+    def parseMap(self,row):
+        relPos = (int(row[1]), int(row[2]))
+        dePos = relativeCoor2DeCoor(relPos)
+        width = int(row[3])
+        height = int(row[4])
+        if row[0] == "ground":
+            for i in range(width):
+                for j in range(height):
+                    groundTile = Ground((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+                    self.groundSpriteGroup.add(groundTile)
+                    self.tileGroup.add(groundTile)
+        elif row[0] == "airTile":
+            for i in range(width):
+                for j in range(height):
+                    airTile = AirTile((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+                    self.tileGroup.add(airTile)
+        elif row[0] == "barrier":
+            self.dead_zone.append((*dePos, width*BLOCKSIZE[0], height*BLOCKSIZE[1]))
 
     def draw(self,screen, cam_pos):
         for sprite in self.tileGroup:
             sprite.draw(screen, cam_pos)
+
+    def update(self):
+        pass
 
 
 class MenuButton(Button):
@@ -304,3 +329,35 @@ class GameMenuScreen():
         for sprite in self.gameMenu_sprite_group:
             status = sprite.keyResponse(event, status)
         return status
+
+class Enemy(pygame.sprite.Sprite):
+
+    def __init__(self,position, x_boundary, y_boundary, imgName, size):
+        super().__init__()
+        self.image = pygame.transform.scale(pygame.image.load(imgName), size)
+        self.size = size
+        self.rect = self.image.get_rect()
+        self.rect.x = position[0]
+        self.rect.y = position[1]
+        self.x_boundary = x_boundary
+        self.y_boundary = y_boundary
+        self.x_speed = 3
+        
+
+    def update(self):
+        self.rect.x += self.x_speed
+        if self.x_speed >0 and self.rect.x > self.x_boundary[1]-self.size[0]:
+            self.rect.x = self.x_boundary[1]-self.size[0]
+            self.x_speed *= -1
+        elif self.x_speed < 0 and self.rect.x < self.x_boundary[0]:
+            self.rect.x = self.x_boundary[0]
+            self.x_speed *= -1
+
+
+    def draw(self, screen, cam_position):
+        screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
+
+class Goomba(Enemy):
+
+    def __init__(self, position, x_boundary, y_boundary):
+        super().__init__(position, x_boundary, y_boundary, "images/goomba.png", GOOMBA_SIZE)
