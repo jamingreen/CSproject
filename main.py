@@ -42,10 +42,12 @@ class Main:
         self.currentScreen = newScreen
 
     def initialiseGame(self, level):
-        restart = True  
+        game = Game(level)
+        restart, respawn_checkpoint, check_point = game.play()
         while restart:
-            game = Game(level)
-            restart = game.play()
+            game = Game(level, respawn = respawn_checkpoint, check_point = check_point)
+            restart,respawn_checkpoint, check_point = game.play()
+            
 
 
     def readStatus(self):

@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import pygame
 from constants import *
 from abc import ABC, abstractmethod
@@ -159,6 +160,9 @@ class Tile(pygame.sprite.Sprite):
     def draw(self, screen, cam_pos):
         screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
     
+    def player_interaction(self, **args):
+        pass
+    
 
 class Ground(Tile):
 
@@ -257,3 +261,226 @@ def extract_level_from_status_code(status_code):
 
     except ValueError:
         return None
+
+class Spike:
+    def __init__(self, position, base, height):
+        self.x = position[0]
+        self.y = position[1]
+        self.base = base
+        self.height = height
+        self.rect_group = []
+        self.createRect()
+
+    def createRect(self):
+        base_change = self.base / 40
+        height_change = self.height / 20
+        base_length = self.base - base_change*2
+        left = self.x + base_change
+        top = self.y + self.height-height_change
+        for i in range(19):
+            rect = pygame.Rect(left, top, base_length, height_change)
+            self.rect_group.append(rect)
+            base_length -= base_change*2
+            left += base_change
+            top -= height_change
+
+    def draw(self,screen, cam_position):
+        for rect in self.rect_group:
+            pygame.draw.rect(screen,SILVER, pygame.Rect(rect.left - cam_position.x, rect.top - cam_position.y, rect.width, rect.height))
+
+    def logic(self):
+        pass
+
+    def player_interaction(self,player_rect):
+        pass
+
+class ActivateObjects(ABC):
+
+    def __init__(self,zone):
+        self.zone = pygame.Rect(*zone)
+        self.activate = False
+
+    def detect(self, player_rect):
+        if player_rect.colliderect(self.zone):
+            self.activate = True
+
+    def logic(self):
+        pass
+
+    @abstractmethod
+    def player_interaction(self,player_rect):
+        pass
+
+class SpikeUp(Spike, ActivateObjects):
+
+    def __init__(self, position, base, height, zone, up, hori_dir = 0): #zone = (leftx, rightx, width, height)
+        temp_pos = (position[0], position[1])
+        Spike.__init__(self, temp_pos, base, height)
+        ActivateObjects.__init__(self,zone)
+        self.tar_y = position[1] - up*BLOCKSIZE[1]
+        self.up = up
+        self.hori_dir = hori_dir
+        self.tar_x = position[0] + hori_dir * BLOCKSIZE[0]
+
+    def player_interaction(self, player_rect):
+        if not self.activate:
+            self.detect(player_rect)
+        if self.activate and player_rect.collidelist(self.rect_group) != -1:
+            return True
+        return False
+
+    def logic(self):
+        if self.activate and self.y > self.tar_y and self.up > 0:
+            self.y -= UP_SPEED
+            for rect in self.rect_group:
+                rect.y -= UP_SPEED
+        elif self.activate and self.y < self.tar_y and self.up < 0:
+            self.y += UP_SPEED
+            for rect in self.rect_group:
+                rect.y += UP_SPEED
+        if self.activate and self.x < self.tar_x and self.hori_dir > 0:
+            self.x += HORI_SPEED
+            for rect in self.rect_group:
+                rect.x += HORI_SPEED
+        elif self.activate and self.x > self.tar_x and self.hori_dir < 0:
+            self.x -= HORI_SPEED
+            for rect in self.rect_group:
+                rect.x -= HORI_SPEED
+
+    def draw(self,screen, cam_position):
+        #pygame.draw.rect(screen, YELLOW, pygame.Rect(self.zone.left - cam_position.x, self.zone.top-cam_position.y, self.zone.width, self.zone.height))
+        super().draw(screen, cam_position)
+
+class Appear_block(ActivateObjects, Ground):
+
+    def __init__(self,position):
+        ActivateObjects.__init__(self, (position[0]-10, position[1]-10, BLOCKSIZE[0]+20, BLOCKSIZE[1]+20))
+        Ground.__init__(self,position)
+    
+    def draw(self, screen, cam_pos):
+        if self.activate:
+            screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
+        
+    def player_interaction(self,player_rect):
+        if not self.activate:
+            self.detect(player_rect)
+
+class DisappearBlock(ActivateObjects, Ground):
+
+    def __init__(self,position):
+        ActivateObjects.__init__(self, (position[0]- 3, position[1]- 3, BLOCKSIZE[0] + 6, BLOCKSIZE[1] + 6))
+        Ground.__init__(self,position)
+        self.rect = NULL
+        self.position = position
+    
+    def draw(self, screen, cam_pos):
+        if not self.activate:
+            screen.blit(self.image, (self.position[0] - cam_pos.x, self.position[1]))
+
+    def player_interaction(self,player_rect):
+        if not self.activate:
+            self.detect(player_rect)
+
+class GrowSpike(Spike, ActivateObjects):
+
+    def __init__(self, position, base, height, zone, up, hori):
+        Spike.__init__(self, position, base, height)
+        ActivateObjects.__init__(self,zone)
+        self.tar_height = height*up
+        self.tar_base = hori * base
+
+    def player_interaction(self, player_rect):
+        if not self.activate:
+            self.detect(player_rect)
+        if self.activate and player_rect.collidelist(self.rect_group) != -1:
+            return True
+        return False
+    
+    def logic(self):
+        flag = False
+        if self.activate and self.height < self.tar_height:
+            self.height += GROW_SPEED
+            self.y -= GROW_SPEED
+            flag = True
+        if self.activate and self.base < self.tar_base:
+            self.base += GROW_SPEED
+            self.x -= GROW_SPEED /2
+            flag = True
+        if flag:
+            self.rect_group = []
+            base_change = self.base / 40
+            height_change = self.height / 20
+            base_length = self.base - base_change*2
+            left = self.x + base_change
+            top = self.y + self.height-height_change
+            for i in range(19):
+                rect = pygame.Rect(left, top, base_length, height_change)
+                self.rect_group.append(rect)
+                base_length -= base_change*2
+                left += base_change
+                top -= height_change
+    
+    def draw(self,screen, cam_position):
+        #pygame.draw.rect(screen, YELLOW, pygame.Rect(self.zone.left - cam_position.x, self.zone.top-cam_position.y, self.zone.width, self.zone.height))
+        super().draw(screen, cam_position)
+
+class Check_point(Tile, ActivateObjects):
+
+    def __init__(self, position):
+        Tile.__init__(self, position, "images/respawn_before.png")
+        ActivateObjects.__init__(self, (position[0]-10, position[1]-10, BLOCKSIZE[0] + 20, BLOCKSIZE[1] + 20))
+
+    def player_interaction(self,player_rect):
+        if player_rect.colliderect(self.zone):
+            self.image = pygame.transform.scale(pygame.image.load("images/respawn.png"), BLOCKSIZE)
+            return [self.x, self.y +18]
+
+class HorizontalSpike():
+    def __init__(self, position, base, height):
+        self.x = position[0]
+        self.y = position[1]
+        self.base = base
+        self.height = height
+        self.rect_group = []
+        self.createRect()
+
+    def createRect(self):
+        base_change = self.base / 40
+        height_change = self.height / 20
+        base_length = self.base - base_change*2
+        left = self.x 
+        top = self.y + height_change
+        for i in range(19):
+            rect = pygame.Rect(left, top, height_change, base_length)
+            self.rect_group.append(rect)
+            base_length -= base_change*2
+            left += height_change
+            top += base_change
+
+    def draw(self,screen, cam_position):
+        for rect in self.rect_group:
+            pygame.draw.rect(screen,SILVER, pygame.Rect(rect.left - cam_position.x, rect.top - cam_position.y, rect.width, rect.height))
+
+    def logic(self):
+        pass
+
+    def player_interaction(self,player_rect):
+        pass
+
+class MoveableHoriSpike(HorizontalSpike, SpikeUp):
+
+    def __init__(self, position, base, height, zone, up, hori_dir = 0):
+        print( position, base, height, zone, up, hori_dir)
+        SpikeUp.__init__(self, position, base, height, zone, up, hori_dir)
+        HorizontalSpike.__init__(self,position, base, height)
+
+    def draw(self,screen, cam_position):
+        #pygame.draw.rect(screen, YELLOW, pygame.Rect(self.zone.left - cam_position.x, self.zone.top-cam_position.y, self.zone.width, self.zone.height))
+        HorizontalSpike.draw(self,screen, cam_position)
+
+    def player_interaction(self,player_rect):
+        SpikeUp.player_interaction(self,player_rect)
+    
+    def logic(self):
+        SpikeUp.logic(self)
+

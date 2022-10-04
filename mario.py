@@ -1,13 +1,13 @@
 import pygame, math, sys, csv
 from pygame import math
-from sqlalchemy import false
 from constants import *
 from camera import *
 from helper import *
+import numpy as np
 
 class Game:
     
-    def __init__(self, level = 1):
+    def __init__(self, level = 1, respawn = False, check_point = None):
         self.size = SIZE
         self.screen = pygame.display.set_mode(self.size)
         self.clock = pygame.time.Clock()
@@ -19,6 +19,7 @@ class Game:
         self.done = False
         self.mouseBuffer = MouseBuffer()
         self.instruction_screen = InstructionScreen(RETURNTOGAME)
+        self.game_board = GameBoard()
         self.currentScreen = GAME
         self.restart = False
         self.death_text = DeathText()
@@ -27,14 +28,21 @@ class Game:
         
 
         self.gameSpriteGroup = []
+        self.respawn_checkpoint = True
+        if respawn:
+            self.check_point = check_point
+        else:
+            self.check_point = self.map.player_start_pos
 
-        self.player = Player(HORIZONAL_MAX_SPEED, self.map.vertices)
+        self.player = Player(HORIZONAL_MAX_SPEED, self.map.vertices, self.check_point)
         self.camera = Camera(self.player, self.map.vertices)
         self.enemy_sprite_group = []
 
-        self.gameSpriteGroup.extend([self.player, self.map, self.menu_button])
+        self.gameSpriteGroup.extend([self.menu_button])
 
         self.parseEntities("entity"+str(level)+".csv")
+        self.trap_group = TrapGroup("trap"+str(level)+".csv")
+        self.gameSpriteGroup.extend([self.trap_group, self.game_board])
 
     def parseEntities(self, filename):
         with open(filename, 'r') as f:
@@ -88,6 +96,7 @@ class Game:
             elif stat == RESTARTGAME:
                 self.done = True
                 self.restart = True
+                self.respawn_checkpoint = False
             elif stat == PLAYERDEATH:
                 self.currentScreen = DEATHSCREEN
                 self.death_count_start = True
@@ -99,13 +108,24 @@ class Game:
         self.mouseBuffer.logic()
         self.playerdeath()
         if self.currentScreen == GAME:
-            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status,self.enemy_sprite_group)
+            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status,self.enemy_sprite_group, self.trap_group)
             if temp != None:
                 self.status.append(temp)
             self.camera.scroll()
+            for tile in self.map.respawn_group:
+                res = tile.player_interaction(player_rect = self.player.rect)
+                if res != None:
+                    self.check_point = res
+            
+            for tile in self.map.tileGroup:
+                tile.player_interaction(player_rect = self.player.rect)
+
+            self.trap_group.logic()
 
             for enemy in self.enemy_sprite_group:
                 enemy.update()
+                
+            self.game_board.logic()
 
     def drawScreen(self):
         self.screen.fill(SKYBLUE)
@@ -113,6 +133,8 @@ class Game:
         # -- Draw here
         for sprite in self.gameSpriteGroup:
             sprite.draw(self.screen, self.camera.position)
+        self.map.draw(self.screen, self.camera.position)
+        self.player.draw(self.screen, self.camera.position)
         
         # Draw menu screen on top
         if self.currentScreen == GAMEMENU:
@@ -130,6 +152,7 @@ class Game:
         if self.death_count >= 200:
             self.done = True
             self.restart = True
+            self.respawn_checkpoint  = True
 
     def play(self):
         self.done = False
@@ -152,16 +175,16 @@ class Game:
             self.drawScreen()
             print("_____________")
             self.clock.tick(60)
-        return self.restart
+        return self.restart, self.respawn_checkpoint, self.check_point
 
 class Player(pygame.sprite.Sprite):
     
-    def __init__(self, horizonal_max_speed, vertices):
+    def __init__(self, horizonal_max_speed, vertices, start_pos):
         super().__init__()
         self.image = pygame.transform.scale(pygame.image.load("images/redRect.png"), PLAYER_SIZE)
         self.rect = self.image.get_rect()
-        self.rect.x = PLAYERSTARTPOS[0]
-        self.rect.y = PLAYERSTARTPOS[1]
+        self.rect.x = start_pos[0]
+        self.rect.y = start_pos[1]
         self.xSpeed = 0
         self.ySpeed = 0
         self.left_border = vertices[0]
@@ -187,10 +210,10 @@ class Player(pygame.sprite.Sprite):
             self.jump_num = 1
             self.on_ground = False
             self.ySpeed = -JUMP_SPEED
-        """elif self.jump_num > 0:
+        elif self.jump_num > 0:
             self.jump_num -= 1
             self.on_ground = False
-            self.ySpeed = -JUMP_SPEED"""
+            self.ySpeed = -JUMP_SPEED
 
     def jumpBuffer(self):
         pass
@@ -227,14 +250,19 @@ class Player(pygame.sprite.Sprite):
                 self.rect.y = max(tile.rect.bottom, self.rect.y)
         self.ySpeed = 0
 
-    def enemy_interaction(self,enemy_sprite_group):
+    def enemy_interaction(self,enemy_sprite_group, trap_group):
         for enemy in enemy_sprite_group:
             if type(enemy) == Goomba:
                 if pygame.sprite.collide_rect(self, enemy):
                     return PLAYERDEATH
+        for trap in trap_group.all_trap_group:
+            if type(trap) in [Spike, SpikeUp,GrowSpike, HorizontalSpike,MoveableHoriSpike]:
+                for rect in trap.rect_group:
+                    if self.rect.colliderect(rect):
+                        return PLAYERDEATH
         return None
 
-    def update(self, tiles, dead_zone, status, enemy_sprite_group):
+    def update(self, tiles, dead_zone, status, enemy_sprite_group, trap_group):
         death = False
         self.movementX()
         collided_tiles = pygame.sprite.spritecollide(self, tiles, False)
@@ -246,10 +274,14 @@ class Player(pygame.sprite.Sprite):
         if len(collided_tiles) != 0:
             self.collisionY(collided_tiles)
 
+        
+
+        trap_group.player_interaction(self.rect)
+
         self.check_dead_zone(dead_zone)
         death = self.checkdeath()
 
-        temp = self.enemy_interaction(enemy_sprite_group)
+        temp = self.enemy_interaction(enemy_sprite_group, trap_group)
         if temp != None:
             death = temp
 
@@ -271,20 +303,20 @@ class Player(pygame.sprite.Sprite):
 
     def keyResponse(self,event, status):
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_a:
-                self.set_speed_x(-self.horizonal_max_speed)
-            elif event.key == pygame.K_d:
-                self.set_speed_x(self.horizonal_max_speed)
-            elif event.key == pygame.K_w:
+            if event.key == pygame.K_w:
                 self.jump()
             elif event.key == pygame.K_SPACE:
                 self.start_shooting()
-        
         elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_a or event.key == pygame.K_d:
-                self.set_speed_x(0)
-            elif event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE:
                 self.stop_shooting()
+        key_p = pygame.key.get_pressed()
+        if key_p[pygame.K_a]:
+            self.set_speed_x(-self.horizonal_max_speed)
+        elif key_p[pygame.K_d]:
+            self.set_speed_x(self.horizonal_max_speed)
+        else:
+            self.set_speed_x(0)
         return status
 
 # 16 x 10 block per map
@@ -293,13 +325,14 @@ class Map:
     def __init__(self, map_file_name):
         self.groundSpriteGroup = pygame.sprite.Group()
         self.tileGroup = pygame.sprite.Group()
+        self.respawn_group = []
         self.dead_zone = []
 
         with open(map_file_name, 'r') as f:
             reader =  csv.reader(f)
             next(reader)
-            
             self.vertices = apply(next(reader), "int") # min x, max x, min y, max y
+            self.player_start_pos = apply(next(reader), "int")[0:2] #Left x, top y
 
             for row in reader:
                 self.parseMap(row)
@@ -323,10 +356,22 @@ class Map:
                     self.tileGroup.add(airTile)
         elif row[0] == "barrier":
             self.dead_zone.append((*dePos, width*BLOCKSIZE[0], height*BLOCKSIZE[1]))
+        elif row[0] == "appear_block":
+            for i in range(width):
+                for j in range(height):
+                    tile = Appear_block((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+                    self.tileGroup.add(tile)
+        elif row[0] == "check_point":
+            tile = Check_point(dePos)
+            self.respawn_group.append(tile)
 
     def draw(self,screen, cam_pos):
         for sprite in self.tileGroup:
             sprite.draw(screen, cam_pos)
+        for dz in self.dead_zone:
+            pygame.draw.rect(screen,YELLOW, pygame.Rect(dz[0], dz[1], dz[2]-cam_pos.x,dz[3] - cam_pos.y))
+        for respawn in self.respawn_group:
+            respawn.draw(screen, cam_pos)
 
     def update(self):
         pass
@@ -377,7 +422,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.y = position[1]
         self.x_boundary = x_boundary
         self.y_boundary = y_boundary
-        self.x_speed = 3
+        self.x_speed = 1.8
         
 
     def update(self):
@@ -408,3 +453,66 @@ class DeathText():
 
     def draw(self,screen):
         screen.blit(self.txt, self.txt_pos)
+
+class TrapGroup():
+
+    def __init__(self, filename):
+        self.all_trap_group = []
+        self.parseFile(filename)
+
+    def parseFile(self,filename):
+        # Maybe not use standard csv file but determine how to read the content by the first column
+        
+        with open(filename, 'r') as f:
+            reader =  csv.reader(f)
+            next(reader)
+
+            for row in reader:
+                relPos = (int(row[1]), int(row[2]))
+                dePos = relativeCoor2DeCoor(relPos)
+                if row[0] == "normal_spike":
+                    trap = Spike(dePos, int(row[3]), int(row[4]))
+                    self.all_trap_group.append(trap)
+                elif row[0] == "up_spike":
+                    trap = SpikeUp(dePos, int(row[3]), int(row[4]),apply(row[5:9], "int"), int(row[11]), int(row[12]))
+                    self.all_trap_group.append(trap)
+                elif row[0] == "disappear_block":
+                    for i in range(int(row[9])):
+                        for j in range(int(row[10])):
+                            trap = DisappearBlock((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+                            self.all_trap_group.append(trap)
+                elif row[0] == "grow_spike":
+                    trap = GrowSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], "int"), int(row[11]), int(row[12]))
+                    self.all_trap_group.append(trap)
+                elif row[0] == "hori_spike":
+                    trap = HorizontalSpike(dePos, int(row[3]), int(row[4]))
+                    self.all_trap_group.append(trap)
+                elif row[0] == "hori_move_spike":
+                    trap = MoveableHoriSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], "int"), int(row[11]), int(row[12]))
+                    self.all_trap_group.append(trap)
+
+
+                
+
+    def draw(self,screen, cam_position):
+        for trap in self.all_trap_group:
+            trap.draw(screen, cam_position)
+
+    def logic(self):
+        for trap in self.all_trap_group:
+            trap.logic()
+
+    def player_interaction(self, player_rect):
+        for trap in self.all_trap_group:
+            trap.player_interaction(player_rect = player_rect)
+
+class GameBoard():
+    
+    def __init__(self):
+        self.time = 0
+    
+    def logic(self):
+        self.time += 1
+
+    def draw(self, screen, cam_pos):
+        pass
