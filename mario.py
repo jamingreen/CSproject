@@ -1,4 +1,4 @@
-import pygame, math, sys, csv
+import pygame, math, sys, csv, os
 from pygame import math
 from constants import *
 from camera import *
@@ -11,7 +11,7 @@ class Game:
         self.size = SIZE
         self.screen = pygame.display.set_mode(self.size)
         self.clock = pygame.time.Clock()
-        self.map = Map("map" +str(level) +".csv")
+        self.map = Map(os.path.join("files","map" +str(level) +".csv"))
         self.level = level
         self.menu_button = MenuButton()
         self.status = []
@@ -36,13 +36,14 @@ class Game:
 
         self.player = Player(HORIZONAL_MAX_SPEED, self.map.vertices, self.check_point)
         self.camera = Camera(self.player, self.map.vertices)
-        self.enemy_sprite_group = []
+        self.enemy_sprite_group = pygame.sprite.Group()
 
         self.gameSpriteGroup.extend([self.menu_button])
 
-        self.parseEntities("entity"+str(level)+".csv")
-        self.trap_group = TrapGroup("trap"+str(level)+".csv")
+        self.parseEntities(os.path.join("files","entity"+str(level)+".csv"))
+        self.trap_group = TrapGroup(os.path.join("files","trap"+str(level)+".csv"))
         self.gameSpriteGroup.extend([self.trap_group, self.game_board])
+        print(globals())
 
     def parseEntities(self, filename):
         with open(filename, 'r') as f:
@@ -55,11 +56,11 @@ class Game:
 
     def create_enemies(self, row):
         position = relativeCoor2DeCoor((int(row[1]), int(row[2])))
-        x_boundary = tuple(apply(row[3].split("|"), "xReToDe"))
-        y_boundary = tuple(apply(row[4].split("|"), "yReToDe"))
+        x_boundary = tuple(apply(row[3].split("|"), xReToDe))
+        y_boundary = tuple(apply(row[4].split("|"), yReToDe))
         if row[0] == "goomba":
             temp = Goomba(position, x_boundary, y_boundary)
-            self.enemy_sprite_group.append(temp)
+            self.enemy_sprite_group.add(temp)
 
     def gameResponse(self, event):
         if event.type == pygame.KEYDOWN:
@@ -124,6 +125,10 @@ class Game:
 
             for enemy in self.enemy_sprite_group:
                 enemy.update()
+                if enemy.hp <= 0:
+                    enemy.kill()
+                    self.gameSpriteGroup.remove(enemy)
+                    
                 
             self.game_board.logic()
 
@@ -181,7 +186,7 @@ class Player(pygame.sprite.Sprite):
     
     def __init__(self, horizonal_max_speed, vertices, start_pos):
         super().__init__()
-        self.image = pygame.transform.scale(pygame.image.load("images/redRect.png"), PLAYER_SIZE)
+        self.image = pygame.transform.scale(pygame.image.load(os.path.join("images", "redRect.png")), PLAYER_SIZE)
         self.rect = self.image.get_rect()
         self.rect.x = start_pos[0]
         self.rect.y = start_pos[1]
@@ -192,18 +197,40 @@ class Player(pygame.sprite.Sprite):
         self.horizonal_max_speed = horizonal_max_speed
         self.on_ground = True
         self.health = 100
+        self.face_direction = 1
+        
+        
+        self.bullet_group = pygame.sprite.Group()
+        self.bullet_timer = 0
+        self.bullet_available = True
     
     def draw(self, screen, cam_position):
         screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
+        for bullet in self.bullet_group:
+            bullet.draw(screen, cam_position)
 
     def set_speed_x(self, speed):
         self.xSpeed = speed
 
-    def start_shooting(self):
-        pass
+    def shoot_bullet(self):
+        if self.bullet_available:
+            bullet = Bullet(self.face_direction, self.rect.center)
+            self.bullet_group.add(bullet)
+            self.bullet_available = False
 
-    def stop_shooting(self):
-        pass
+    def shoot_timer(self):
+        if not self.bullet_available:
+            self.bullet_timer += 1
+        if self.bullet_timer >= BULLET_TIMER:
+            self.bullet_available = True
+            self.bullet_timer = 0
+
+    def bullet_enemy_interaction(self, enemies):
+        for enemy in enemies:
+            hits = pygame.sprite.spritecollide(enemy, self.bullet_group, False)
+            enemy.change_hp(-len(hits) * BULLET_DAMAGE)
+            for bu in hits:
+                bu.kill()
 
     def jump(self): 
         if self.on_ground:
@@ -219,7 +246,7 @@ class Player(pygame.sprite.Sprite):
         pass
 
     def movementX(self):
-        self.rect.x += self.xSpeed
+        self.rect.x += self.xSpeed 
 
         # boarder collision
         self.rect.x = min(self.rect.x, self.right_border)
@@ -274,13 +301,15 @@ class Player(pygame.sprite.Sprite):
         if len(collided_tiles) != 0:
             self.collisionY(collided_tiles)
 
-        
+        self.shoot_timer()
+        self.bullet_group.update(tiles)
 
         trap_group.player_interaction(self.rect)
 
         self.check_dead_zone(dead_zone)
         death = self.checkdeath()
 
+        self.bullet_enemy_interaction(enemy_sprite_group)
         temp = self.enemy_interaction(enemy_sprite_group, trap_group)
         if temp != None:
             death = temp
@@ -306,15 +335,15 @@ class Player(pygame.sprite.Sprite):
             if event.key == pygame.K_w:
                 self.jump()
             elif event.key == pygame.K_SPACE:
-                self.start_shooting()
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE:
-                self.stop_shooting()
+                self.shoot_bullet()
+
         key_p = pygame.key.get_pressed()
         if key_p[pygame.K_a]:
             self.set_speed_x(-self.horizonal_max_speed)
+            self.face_direction = -1
         elif key_p[pygame.K_d]:
             self.set_speed_x(self.horizonal_max_speed)
+            self.face_direction = 1
         else:
             self.set_speed_x(0)
         return status
@@ -331,8 +360,8 @@ class Map:
         with open(map_file_name, 'r') as f:
             reader =  csv.reader(f)
             next(reader)
-            self.vertices = apply(next(reader), "int") # min x, max x, min y, max y
-            self.player_start_pos = apply(next(reader), "int")[0:2] #Left x, top y
+            self.vertices = apply(next(reader), int) # min x, max x, min y, max y
+            self.player_start_pos = apply(next(reader), int)[0:2] #Left x, top y
 
             for row in reader:
                 self.parseMap(row)
@@ -423,7 +452,10 @@ class Enemy(pygame.sprite.Sprite):
         self.x_boundary = x_boundary
         self.y_boundary = y_boundary
         self.x_speed = 1.8
+        self.hp = 10
         
+    def change_hp(self, value):
+        self.hp += value
 
     def update(self):
         self.rect.x += self.x_speed
@@ -433,6 +465,8 @@ class Enemy(pygame.sprite.Sprite):
         elif self.x_speed < 0 and self.rect.x < self.x_boundary[0]:
             self.rect.x = self.x_boundary[0]
             self.x_speed *= -1
+            
+        
 
 
     def draw(self, screen, cam_position):
@@ -442,6 +476,7 @@ class Goomba(Enemy):
 
     def __init__(self, position, x_boundary, y_boundary):
         super().__init__(position, x_boundary, y_boundary, "images/goomba.png", GOOMBA_SIZE)
+        self.hp = 30
 
 class DeathText():
 
@@ -474,7 +509,7 @@ class TrapGroup():
                     trap = Spike(dePos, int(row[3]), int(row[4]))
                     self.all_trap_group.append(trap)
                 elif row[0] == "up_spike":
-                    trap = SpikeUp(dePos, int(row[3]), int(row[4]),apply(row[5:9], "int"), int(row[11]), int(row[12]))
+                    trap = SpikeUp(dePos, int(row[3]), int(row[4]),apply(row[5:9], int), int(row[11]), int(row[12]))
                     self.all_trap_group.append(trap)
                 elif row[0] == "disappear_block":
                     for i in range(int(row[9])):
@@ -482,13 +517,13 @@ class TrapGroup():
                             trap = DisappearBlock((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
                             self.all_trap_group.append(trap)
                 elif row[0] == "grow_spike":
-                    trap = GrowSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], "int"), int(row[11]), int(row[12]))
+                    trap = GrowSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], int), int(row[11]), int(row[12]))
                     self.all_trap_group.append(trap)
                 elif row[0] == "hori_spike":
                     trap = HorizontalSpike(dePos, int(row[3]), int(row[4]))
                     self.all_trap_group.append(trap)
                 elif row[0] == "hori_move_spike":
-                    trap = MoveableHoriSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], "int"), int(row[11]), int(row[12]))
+                    trap = MoveableHoriSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], int), int(row[11]), int(row[12]))
                     self.all_trap_group.append(trap)
 
 

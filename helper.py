@@ -2,9 +2,11 @@ from asyncio.windows_events import NULL
 import pygame
 from constants import *
 from abc import ABC, abstractmethod
+import os
 
 class Button(pygame.sprite.Sprite, ABC):
 
+    # Initialise Button as a sprite object
     def __init__(self,width, height, position, imageName):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(pygame.image.load(imageName), (width, height))
@@ -30,7 +32,7 @@ class Button(pygame.sprite.Sprite, ABC):
 class SettingButton(Button):
 
     def __init__(self, width, height, position):
-        super().__init__(width, height,position,"images/settingButton.png")
+        super().__init__(width, height,position,os.path.join("images","settingButton.png"))
 
     def mouseInteraction(self,position, status):
         if self.rect.collidepoint(position):
@@ -38,7 +40,18 @@ class SettingButton(Button):
             status.extend([SCREENTOSETTING])
         return status
     
+class GameObject(pygame.sprite.Sprite, ABC):
+    
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
 
+    @abstractmethod
+    def update(self):
+        pass
+    
+    @abstractmethod
+    def draw(self):
+        pass
 
 
 class MouseBuffer():
@@ -107,7 +120,7 @@ class Background(pygame.sprite.Sprite):
 class CloseButton(Button):
 
     def __init__(self,width, height, position, statusCode):
-        super().__init__(width, height, position, "images/closeButton.jpg")
+        super().__init__(width, height, position, os.path.join("images","closeButton.jpg"))
         self.statusCode = statusCode
 
     def mouseInteraction(self, position, status):
@@ -167,12 +180,12 @@ class Tile(pygame.sprite.Sprite):
 class Ground(Tile):
 
     def __init__(self,position):
-        super().__init__(position, "images/groundTile.png")
+        super().__init__(position, os.path.join("images","groundTile.png"))
 
 class AirTile(Tile):
     
     def __init__(self,position):
-        super().__init__(position,"images/airTile.png")
+        super().__init__(position,os.path.join("images","airTile.png"))
 
 class InstructionScreen():
 
@@ -239,7 +252,7 @@ def apply(list, func, **args):
         argument = argument + ", " + str(key) +"="+str(value)
     argument = argument + ")"
     for i in list:
-        com = f"x = {func}({ i }" + argument
+        com = f"x = {func.__name__}({ i }" + argument
         loc = {}
         exec(f"{com}",globals(),loc)
         x = loc["x"]
@@ -254,7 +267,7 @@ def check_status_init_level(string):
     return bool(re.match("^(Initialise Level)\s\-?[0-9]+$", string))
 
 def extract_level_from_status_code(status_code):
-    if not create_level_status_code(status_code):
+    if not check_status_init_level(status_code):
         return None
     try:
         return int(status_code.split(" ")[-1])
@@ -427,12 +440,12 @@ class GrowSpike(Spike, ActivateObjects):
 class Check_point(Tile, ActivateObjects):
 
     def __init__(self, position):
-        Tile.__init__(self, position, "images/respawn_before.png")
+        Tile.__init__(self, position, os.path.join("images","respawn_before.png"))
         ActivateObjects.__init__(self, (position[0]-10, position[1]-10, BLOCKSIZE[0] + 20, BLOCKSIZE[1] + 20))
 
     def player_interaction(self,player_rect):
         if player_rect.colliderect(self.zone):
-            self.image = pygame.transform.scale(pygame.image.load("images/respawn.png"), BLOCKSIZE)
+            self.image = pygame.transform.scale(pygame.image.load(os.path.join("images","respawn.png")), BLOCKSIZE)
             return [self.x, self.y +18]
 
 class HorizontalSpike():
@@ -483,4 +496,22 @@ class MoveableHoriSpike(HorizontalSpike, SpikeUp):
     
     def logic(self):
         SpikeUp.logic(self)
+
+class Bullet(GameObject):
+    
+    def __init__(self, direction, position):
+        super().__init__()
+        self.image = pygame.transform.scale(pygame.image.load(os.path.join("images", "redRect.png")), BULLET_SIZE)
+        self.rect = self.image.get_rect()
+        self.direction = direction
+        self.rect.x = position[0]
+        self.rect.y = position[1]
+    
+    def update(self, tiles):
+        self.rect.x += self.direction * BULLET_SPEED
+        if len(pygame.sprite.spritecollide(self, tiles, False)) != 0:
+            self.kill()
+    
+    def draw(self, screen, cam_position):
+        screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
 
