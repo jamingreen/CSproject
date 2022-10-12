@@ -515,3 +515,18 @@ class Bullet(GameObject):
     def draw(self, screen, cam_position):
         screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
 
+class FinishPoint(Tile, ActivateObjects):
+    
+    def __init__(self, position):
+        pygame.sprite.Sprite.__init__(self)
+        ActivateObjects.__init__(self, (position[0], position[1], BLOCKSIZE[0], BLOCKSIZE[1]*5))
+        self.image = pygame.transform.scale(pygame.image.load(os.path.join("images", "flag_red.png")), (BLOCKSIZE[0], BLOCKSIZE[1]*5))
+        self.rect = self.image.get_rect()
+        self.rect.x = position[0]
+        self.rect.y = position[1]
+        
+    def player_interaction(self,player_rect):
+        pass
+    
+    def draw(self, screen, cam_pos):
+        screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))

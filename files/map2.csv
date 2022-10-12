@@ -16,3 +16,4 @@ check_point, 25, 13,1,1
 ground, 45, 12, 5,1
 check_point, 47, 11, 1,1
 ground, 95, 14, 10,1
+finish_point, 104, 9,1,1

@@ -47,10 +47,15 @@ class Game:
         
         # Text Shown when death
         self.death_text = DeathText()
+        self.win_text = WinText()
         
         # Time count until automatic restart from checkpoint
         self.death_count = 0
         self.death_count_start = False
+        
+        # Time count until automatic exit
+        self.win_count = 0
+        self.win_count_start = False
         
         # Sprite Group that contains everything
         self.gameSpriteGroup = []
@@ -113,7 +118,7 @@ class Game:
         if event.type == pygame.KEYDOWN:
             
             # When it is inside the death screen + enter is pressed, the game restart instantly 
-            if event.key == pygame.K_RETURN and self.death_count_start:
+            if event.key in [pygame.K_RETURN, pygame.K_SPACE] and self.death_count_start:
                 self.done = True
                 self.restart = True
 
@@ -170,6 +175,9 @@ class Game:
                 self.currentScreen = DEATHSCREEN
                 self.death_count_start = True
                 
+            elif stat == PLAYERWIN:
+                self.currentScreen = WINSCREEN
+                self.win_count_start = True
         # Reset the screen status for next iteration
         self.status = []
 
@@ -184,6 +192,7 @@ class Game:
         
         # Player death screen count down
         self.playerdeath()
+        self.playerwin()
         
         # Only run if the player is playing the game (All game object logic will not work if the menu is opened)
         if self.currentScreen == GAME:
@@ -203,6 +212,9 @@ class Game:
                 res = tile.player_interaction(player_rect = self.player.rect)
                 if res != None:
                     self.check_point = res
+            
+            if self.player.rect.colliderect(self.map.finish_point.rect):
+                self.status.append(PLAYERWIN)
             
             # Player and tiles interaction (Nothing for now)
             for tile in self.map.tileGroup:
@@ -240,6 +252,8 @@ class Game:
             self.instruction_screen.drawScreen(self.screen)
         elif self.currentScreen == DEATHSCREEN:
             self.death_text.draw(self.screen)
+        elif self.currentScreen == WINSCREEN:
+            self.win_text.draw(self.screen)
 
         pygame.display.flip()
 
@@ -251,11 +265,18 @@ class Game:
             self.done = True
             self.restart = True
             self.respawn_checkpoint  = True
+            
+    def playerwin(self):
+        if self.win_count_start:
+            self.win_count += 1
+        if self.win_count >= 200:
+            self.done = True
+            self.restart = False
+            self.respawn_checkpoint = False
 
     # Main game loop
     def play(self):
         self.done = False
-        print("Start Game cycle")
         while not self.done:
             
             # Loop throught events
@@ -277,7 +298,6 @@ class Game:
 
             # Draw Screen
             self.drawScreen()
-            print("_____________")
             
             # 60 ticks per second
             self.clock.tick(60)
@@ -547,6 +567,8 @@ class Map:
         
         # Deadzones
         self.dead_zone = []
+        
+        self.finish_point = NULL
 
         # Parse the csv map file
         with open(map_file_name, 'r') as f:
@@ -608,6 +630,9 @@ class Map:
         elif row[0] == "check_point":
             tile = Check_point(dePos)
             self.checkpoint_group.append(tile)
+            
+        elif row[0] == "finish_point":
+            self.finish_point = FinishPoint(dePos)
 
     # Draw objects on screen
     def draw(self,screen, cam_pos):
@@ -624,6 +649,7 @@ class Map:
         for respawn in self.checkpoint_group:
             respawn.draw(screen, cam_pos)
 
+        self.finish_point.draw(screen, cam_pos)
     # Update (nothing for now)
     def update(self):
         pass
@@ -778,3 +804,13 @@ class GameBoard():
 
     def draw(self, screen, cam_pos):
         pass
+
+class WinText():
+    
+    def __init__(self):
+        font = pygame.font.Font("freesansbold.ttf",100)
+        self.txt = font.render("Victory", True, DARKBLUE)
+        self.txt_pos = (182, 130)
+        
+    def draw(self,screen):
+        screen.blit(self.txt, self.txt_pos)

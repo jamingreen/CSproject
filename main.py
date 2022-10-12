@@ -104,7 +104,6 @@ class Main:
             click,_,_ = pygame.mouse.get_pressed()
             if click == True and not self.mouseBuffer.flag:
                 self.mouseBuffer.tFlag()
-                print("Left click")
                 mouse = pygame.mouse.get_pos()
                 self.mouseResponse(mouse)
 
@@ -166,7 +165,6 @@ class LevelButton(Button):
 
     def mouseInteraction(self,position, status):
         if self.rect.collidepoint(position):
-            print("Level button mouse collide")
             status.extend([create_level_status_code(self.level)])
         return status
 

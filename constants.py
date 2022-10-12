@@ -40,6 +40,7 @@ INSTRUCTIONSCREEN = "instruction screen"
 GAMEMENU = "game menu"
 GAME = "game"
 DEATHSCREEN = "death screen"
+WINSCREEN = "win screen"
 
 #Status Code
 SCREENTOSETTING = "change to setting screen"
@@ -50,6 +51,7 @@ EXITGAME = "exit game"
 SCREENTOINSTRUCTION = "change to instruction screen"
 RESTARTGAME = "restart game"
 PLAYERDEATH = "player death"
+PLAYERWIN = "player wins"
 
 # Camera
 PLAYER_LEFT_PADDING =  150
