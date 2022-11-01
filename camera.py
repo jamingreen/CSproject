@@ -1,10 +1,12 @@
 import pygame
-from constants import * 
+
+from constants import *
+
 vec = pygame.math.Vector2
 
 class Camera:
 
-    def __init__(self,player, vertices):
+    def __init__(self,player, vertices: list):
         self.vertices = vertices
         self.player = player
         self.position = vec(0,0)

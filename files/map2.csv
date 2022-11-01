@@ -6,14 +6,14 @@ ground, 0, 14, 15, 1
 ground, 18, 14, 10, 1
 ground, 33, 15, 12, 1
 ground, 53, 14, 15, 1
-ground, 72, 14, 20, 1
+ground, 72, 14, 20, 4
 airTile, 4, 10, 4, 1
 airTile, 7, 8, 4, 1
 ground, 30, 8, 1, 8
 appear_block, 67,11,5,1
 appear_block, 72, 11, 1, 3
-check_point, 25, 13,1,1
+check_point, 26, 13,1,1
 ground, 45, 12, 5,1
 check_point, 47, 11, 1,1
-ground, 95, 14, 10,1
+ground, 95, 14, 10,4
 finish_point, 104, 9,1,1

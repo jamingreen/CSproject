@@ -1,7 +1,10 @@
-import pygame, math, sys
+import sys
+
+import pygame
+
+from constants import *
 from helper import *
 from mario import Game
-from constants import *
 
 
 class Main:
@@ -30,7 +33,7 @@ class Main:
         pass
 
     # Change status (Task pending to do)
-    def mouseResponse(self, position):
+    def mouseResponse(self, position: tuple):
         if self.currentScreen == MENU:
             self.status = self.menu.mouseInteraction(position, self.status)
         elif self.currentScreen == SETTINGSCREEN:
@@ -38,15 +41,15 @@ class Main:
         elif self.currentScreen == INSTRUCTIONSCREEN:
             self.status = self.instructionScreen.mouseInteraction(position, self.status)
     
-    def setCurrentScreen(self, newScreen):
+    def setCurrentScreen(self, newScreen: str):
         self.currentScreen = newScreen
 
-    def initialiseGame(self, level):
+    def initialiseGame(self, level: int):
         game = Game(level)
-        restart, respawn_checkpoint, check_point = game.play()
+        restart, respawn_checkpoint, check_point, death_count = game.play()
         while restart:
-            game = Game(level, respawn = respawn_checkpoint, check_point = check_point)
-            restart,respawn_checkpoint, check_point = game.play()
+            game = Game(level, respawn = respawn_checkpoint, check_point = check_point, death_count = death_count)
+            restart,respawn_checkpoint, check_point, death_count = game.play()
             
 
 
@@ -126,7 +129,7 @@ class Main:
 #Menu Screen
 class Menu():
 
-    def __init__(self, screen):
+    def __init__(self, screen: pygame.Surface):
         self.size = SIZE
         self.screen = screen
         self.menuSpriteGroup = pygame.sprite.Group()
@@ -146,24 +149,24 @@ class Menu():
             startX += 264
 
     # Return new status
-    def mouseInteraction(self, position, status):
+    def mouseInteraction(self, position: tuple, status: list):
         for sprite in self.menuSpriteGroup:
             status = sprite.mouseInteraction(position, status)
         return status
 
-    def drawScreen(self,screen):
+    def drawScreen(self,screen: pygame.Surface):
         self.settingButton.draw(screen)
         for sprite in self.menuSpriteGroup:
             sprite.draw(screen)
 
 class LevelButton(Button):
 
-    def __init__(self,level, name, width, height, position, imageName):
+    def __init__(self,level: int, name: str, width: int, height: int, position: tuple, imageName:str):
         super().__init__(width, height, position, imageName)
         self.name = name
         self.level = level
 
-    def mouseInteraction(self,position, status):
+    def mouseInteraction(self,position: tuple, status: list):
         if self.rect.collidepoint(position):
             status.extend([create_level_status_code(self.level)])
         return status
@@ -190,16 +193,16 @@ class MenuSettingScreen:
         self.controlButton = InstructionButton((331,158))
         self.gameMenu_sprite_group = [self.background, self.closeButton, self.exitButton,self.controlButton]
 
-    def drawScreen(self, screen):
+    def drawScreen(self, screen: pygame.Surface):
         for sprite in self.gameMenu_sprite_group:
             sprite.draw(screen)
 
-    def mouseInteraction(self,position, status):
+    def mouseInteraction(self,position: tuple, status: list):
         for sprite in self.gameMenu_sprite_group:
             status = sprite.mouseInteraction(position, status)
         return status
 
-    def keyResponse(self,event, status):
+    def keyResponse(self,event: pygame.event, status: list):
         for sprite in self.gameMenu_sprite_group:
             status = sprite.keyResponse(event, status)
         return status

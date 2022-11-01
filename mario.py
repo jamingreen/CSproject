@@ -1,13 +1,17 @@
-import pygame, math, sys, csv, os
-from pygame import math
-from constants import *
+import csv
+import os
+import sys
+
+import pygame
+
 from camera import *
+from constants import *
 from helper import *
-import numpy as np
+
 
 class Game:
     
-    def __init__(self, level = 1, respawn = False, check_point = None):
+    def __init__(self, level = 1, respawn = False, check_point = None, death_count = 0):
         
         # Pygame setups
         self.size = SIZE # (810,540)
@@ -37,7 +41,7 @@ class Game:
         self.instruction_screen = InstructionScreen(RETURNTOGAME)
         
         # Game Board
-        self.game_board = GameBoard()
+        self.game_board = GameBoard(death_count = death_count)
         
         # Set Current Screen Code
         self.currentScreen = GAME
@@ -88,7 +92,7 @@ class Game:
         self.gameSpriteGroup.extend([self.trap_group, self.game_board])
 
     # Parse different enemies to add into game sprite group
-    def parseEntities(self, filename):
+    def parseEntities(self, filename: str):
         with open(filename, 'r') as f:
             reader =  csv.reader(f)
             next(reader)
@@ -99,7 +103,7 @@ class Game:
 
 
     # Create Enemy object from each line and add into enemy sprite group
-    def create_enemies(self, row):
+    def create_enemies(self, row: list):
         
         # Change relative position to pygame coordinates
         position = relativeCoor2DeCoor((int(row[1]), int(row[2])))
@@ -114,16 +118,21 @@ class Game:
             self.enemy_sprite_group.add(temp)
 
     # The game response to different events
-    def gameResponse(self, event):
+    def gameResponse(self, event: pygame.event):
         if event.type == pygame.KEYDOWN:
             
             # When it is inside the death screen + enter is pressed, the game restart instantly 
             if event.key in [pygame.K_RETURN, pygame.K_SPACE] and self.death_count_start:
                 self.done = True
                 self.restart = True
+            elif event.key == pygame.K_ESCAPE:
+                if self.currentScreen == GAME:
+                    self.currentScreen = GAMEMENU
+                else:
+                    self.currentScreen = GAME
 
     # Response to different keys being pressed
-    def keyResponse(self, event):
+    def keyResponse(self, event: pygame.event):
         
         # Different response with respect to the screen mode
         if self.currentScreen == GAMEMENU:
@@ -135,7 +144,7 @@ class Game:
         self.gameResponse(event)
 
     # Response to mouse cursor clicks
-    def mouseResponse(self, position):
+    def mouseResponse(self, position: tuple):
         self.status = self.menu_button.mouseInteraction(position, self.status)
         
         # Different response according to the screen mode
@@ -174,6 +183,7 @@ class Game:
             elif stat == PLAYERDEATH:
                 self.currentScreen = DEATHSCREEN
                 self.death_count_start = True
+                self.game_board.death_count += 1
                 
             elif stat == PLAYERWIN:
                 self.currentScreen = WINSCREEN
@@ -301,14 +311,14 @@ class Game:
             
             # 60 ticks per second
             self.clock.tick(60)
-        return self.restart, self.respawn_checkpoint, self.check_point
+        return self.restart, self.respawn_checkpoint, self.check_point, 0 if not self.respawn_checkpoint else self.game_board.death_count
 
 
 # Player object
 class Player(pygame.sprite.Sprite):
     
     
-    def __init__(self, horizonal_max_speed, vertices, start_pos):
+    def __init__(self, horizonal_max_speed: int, vertices: list, start_pos: list):
         super().__init__()
         
         # Import image for the player 
@@ -355,7 +365,7 @@ class Player(pygame.sprite.Sprite):
             bullet.draw(screen, cam_position)
 
     # Speed setter
-    def set_speed_x(self, speed):
+    def set_speed_x(self, speed: int):
         self.xSpeed = speed
 
     # Shoot bullet
@@ -376,7 +386,7 @@ class Player(pygame.sprite.Sprite):
             self.bullet_timer = 0
 
     # Interactions between bullets and enemies
-    def bullet_enemy_interaction(self, enemies):
+    def bullet_enemy_interaction(self, enemies: list):
         
         for enemy in enemies:
             hits = pygame.sprite.spritecollide(enemy, self.bullet_group, False)
@@ -413,7 +423,7 @@ class Player(pygame.sprite.Sprite):
         self.ySpeed += GRAVITY
         
     # Horizonal interaction with tiles it collided with
-    def collisionX(self, tiles):
+    def collisionX(self, tiles: list):
 
         # For moving right
         if self.xSpeed > 0:
@@ -429,7 +439,7 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x = max(tile.rect.right, self.rect.x)
 
     # Veritical interaction with tiles it collided with
-    def collisionY(self, tiles):
+    def collisionY(self, tiles: list):
         
         # Moving down
         if self.ySpeed > 0:
@@ -451,7 +461,7 @@ class Player(pygame.sprite.Sprite):
             self.ySpeed = 0
 
     # Interaction between enemy, traps and player
-    def enemy_interaction(self,enemy_sprite_group, trap_group):
+    def enemy_interaction(self,enemy_sprite_group: list, trap_group: list):
         
         # Player dies if it touches with any enemy
         for enemy in enemy_sprite_group:
@@ -509,7 +519,7 @@ class Player(pygame.sprite.Sprite):
         return death
         
     # Check if the player touches the deathzone
-    def check_dead_zone(self,dead_zone):
+    def check_dead_zone(self,dead_zone: list):
         for dead in dead_zone:
             if self.rect.x >= dead[0] and self.rect.x <= dead[0] + dead[2] and self.rect.y >= dead[1] and self.rect.y <= dead[1] + dead[3]:
                 self.health -= 1000
@@ -520,7 +530,7 @@ class Player(pygame.sprite.Sprite):
             return PLAYERDEATH
 
     # Key response
-    def keyResponse(self,event, status):
+    def keyResponse(self,event: pygame.event, status: list):
         if event.type == pygame.KEYDOWN:
             
             # If W is pressed, jump
@@ -554,7 +564,7 @@ class Player(pygame.sprite.Sprite):
 class Map:
     
     # Initialise Map object
-    def __init__(self, map_file_name):
+    def __init__(self, map_file_name: str):
         
         # Ground Tiles
         self.groundSpriteGroup = pygame.sprite.Group()
@@ -588,7 +598,7 @@ class Map:
                 self.parseMap(row)
         
     # Create objects according to the information of that row
-    def parseMap(self,row):
+    def parseMap(self,row: list):
         
         # Get the relative position
         relPos = (int(row[1]), int(row[2]))
@@ -635,7 +645,7 @@ class Map:
             self.finish_point = FinishPoint(dePos)
 
     # Draw objects on screen
-    def draw(self,screen, cam_pos):
+    def draw(self,screen: pygame.Surface, cam_pos: pygame.math.Vector2):
         
         # Draw all tiles
         for sprite in self.tileGroup:
@@ -662,7 +672,7 @@ class MenuButton(Button):
         super().__init__(40,40,(SIZE[0]- MENU_BUTTON_PADDING - 40, MENU_BUTTON_PADDING),"images/settingButton.png")
 
     # Interaction with mouse
-    def mouseInteraction(self, position, status):
+    def mouseInteraction(self, position: tuple, status: list):
         if self.rect.collidepoint(position):
             status.extend([SCREENTOGAMEMENU])
         return status
@@ -678,23 +688,23 @@ class GameMenuScreen():
         self.restartButton = RestartButton((331, 212))
         self.gameMenu_sprite_group = [self.background, self.closeButton, self.quitButton,self.controlButton, self.controlButton, self.restartButton]
 
-    def drawScreen(self, screen):
+    def drawScreen(self, screen: pygame.Surface):
         for sprite in self.gameMenu_sprite_group:
             sprite.draw(screen)
 
-    def mouseInteraction(self,position, status):
+    def mouseInteraction(self,position: tuple, status: list):
         for sprite in self.gameMenu_sprite_group:
             status = sprite.mouseInteraction(position, status)
         return status
 
-    def keyResponse(self,event, status):
+    def keyResponse(self,event: pygame.event, status: list):
         for sprite in self.gameMenu_sprite_group:
             status = sprite.keyResponse(event, status)
         return status
 
 class Enemy(pygame.sprite.Sprite):
 
-    def __init__(self,position, x_boundary, y_boundary, imgName, size, hp):
+    def __init__(self, position: list, x_boundary: int, y_boundary: int, imgName: str, size: tuple, hp: int):
         super().__init__()
         self.image = pygame.transform.scale(pygame.image.load(imgName), size)
         self.size = size
@@ -708,7 +718,7 @@ class Enemy(pygame.sprite.Sprite):
         self.max_hp = self.hp
         self.h_bar_height = round(self.rect.height*0.1)
         
-    def change_hp(self, value):
+    def change_hp(self, value: int):
         self.hp += value
 
     def update(self):
@@ -721,7 +731,7 @@ class Enemy(pygame.sprite.Sprite):
         
 
 
-    def draw(self, screen, cam_position):
+    def draw(self, screen: pygame.Surface, cam_position: pygame.math.Vector2):
         screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
         pygame.draw.rect(screen, RED, (self.rect.left - cam_position.x, round(self.rect.bottom - self.rect.height*0.1), self.rect.width, self.h_bar_height))
         pygame.draw.rect(screen, LIGHTGREEN, (self.rect.left - cam_position.x, round(self.rect.bottom - self.rect.height*0.1), (self.rect.width * self.hp/self.max_hp), self.h_bar_height))
@@ -734,21 +744,21 @@ class Goomba(Enemy):
 class DeathText():
 
     def __init__(self):
-        font = pygame.font.Font("freesansbold.ttf", 100)
-        self.txt = font.render("Defeated", True, DARKBLUE)
+        big_font = pygame.font.Font("freesansbold.ttf",100)
+        self.txt = big_font.render("Defeated", True, DARKBLUE)
         fontSize = self.txt.get_size()
         self.txt_pos = (182, 130)
 
-    def draw(self,screen):
+    def draw(self,screen: pygame.Surface):
         screen.blit(self.txt, self.txt_pos)
 
 class TrapGroup():
 
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         self.all_trap_group = []
         self.parseFile(filename)
 
-    def parseFile(self,filename):
+    def parseFile(self,filename: str):
         # Maybe not use standard csv file but determine how to read the content by the first column
         
         with open(filename, 'r') as f:
@@ -782,7 +792,7 @@ class TrapGroup():
 
                 
 
-    def draw(self,screen, cam_position):
+    def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
         for trap in self.all_trap_group:
             trap.draw(screen, cam_position)
 
@@ -790,27 +800,34 @@ class TrapGroup():
         for trap in self.all_trap_group:
             trap.logic()
 
-    def player_interaction(self, player_rect):
+    def player_interaction(self, player_rect: pygame.Rect):
         for trap in self.all_trap_group:
             trap.player_interaction(player_rect = player_rect)
 
 class GameBoard():
     
-    def __init__(self):
+    def __init__(self, death_count=0):
         self.time = 0
+        self.death_count = 0
+        self.death_image = pygame.transform.scale(pygame.image.load(os.path.join("images", "death.png")), (40,40))
+        self.death_image_coor = (498,20)
+        self.death_count = death_count
+        self.small_font = pygame.font.Font("freesansbold.ttf", 30)
     
     def logic(self):
         self.time += 1
 
-    def draw(self, screen, cam_pos):
-        pass
+    def draw(self, screen: pygame.Surface, cam_pos: pygame.math.Vector2):
+        screen.blit(self.death_image, self.death_image_coor)
+        txt = self.small_font.render(str(self.death_count), True, BLACK)
+        screen.blit(txt, (558, 30))
 
 class WinText():
     
     def __init__(self):
-        font = pygame.font.Font("freesansbold.ttf",100)
-        self.txt = font.render("Victory", True, DARKBLUE)
+        big_font = pygame.font.Font("freesansbold.ttf",100)
+        self.txt = big_font.render("Victory", True, DARKBLUE)
         self.txt_pos = (182, 130)
         
-    def draw(self,screen):
+    def draw(self,screen: pygame.Surface):
         screen.blit(self.txt, self.txt_pos)

@@ -1,13 +1,17 @@
-from asyncio.windows_events import NULL
-import pygame
-from constants import *
-from abc import ABC, abstractmethod
 import os
+from abc import ABC, abstractmethod
+from asyncio.windows_events import NULL
+from pyclbr import Function
+
+import pygame
+
+from constants import *
+
 
 class Button(pygame.sprite.Sprite, ABC):
 
     # Initialise Button as a sprite object
-    def __init__(self,width, height, position, imageName):
+    def __init__(self,width: int, height: int, position: tuple, imageName: str):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.transform.scale(pygame.image.load(imageName), (width, height))
         self.rect = self.image.get_rect()
@@ -15,15 +19,15 @@ class Button(pygame.sprite.Sprite, ABC):
         self.rect.y = position[1]
 
     @abstractmethod
-    def mouseInteraction(self,position, status):
+    def mouseInteraction(self,position: tuple, status: list):
         if self.rect.collidepoint(position):
             pass
         return status
     
-    def keyResponse(self,event,status):
+    def keyResponse(self,event: pygame.event, status: list):
         return status
 
-    def draw(self,screen, cam_pos = pygame.math.Vector2(0,0)):
+    def draw(self,screen: pygame.Surface, cam_pos = pygame.math.Vector2(0,0)):
         screen.blit(self.image, (self.rect.x,self.rect.y))
 
     def update(self):
@@ -31,12 +35,11 @@ class Button(pygame.sprite.Sprite, ABC):
 
 class SettingButton(Button):
 
-    def __init__(self, width, height, position):
+    def __init__(self, width: int, height: int, position: tuple):
         super().__init__(width, height,position,os.path.join("images","settingButton.png"))
 
-    def mouseInteraction(self,position, status):
+    def mouseInteraction(self,position: tuple, status: list):
         if self.rect.collidepoint(position):
-            print("Setting Button mouse collide")
             status.extend([SCREENTOSETTING])
         return status
     
@@ -79,7 +82,7 @@ class MouseBuffer():
 
 class WordButton(ABC):
 
-    def __init__(self,width, height, position, color, textColor, txt):
+    def __init__(self,width: int, height: int, position: tuple, color: tuple, textColor: tuple, txt: str):
         super().__init__()
         self.rect = pygame.Rect(*position, width, height)
         self.color = color
@@ -89,37 +92,37 @@ class WordButton(ABC):
         self.txt_pos = (position[0] + (width - fontSize[0])/2, position[1] + (height - fontSize[1])/2)
 
     @abstractmethod
-    def mouseInteraction(self,position, status):
+    def mouseInteraction(self,position: tuple, status: list):
         return status
 
-    def keyResponse(self,event,status):
+    def keyResponse(self,event: pygame.event,status: list):
         return status
 
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface):
         pygame.draw.rect(screen, self.color, self.rect, 0)
         screen.blit(self.txt, self.txt_pos)
 
 class Background(pygame.sprite.Sprite):
 
-    def __init__(self, width, height, position, color):
+    def __init__(self, width: int, height: int, position: tuple, color: tuple):
         super().__init__()
         self.width = width
         self.height = height
         self.color = color
         self.rect = pygame.Rect(position[0], position[1], width, height)
     
-    def draw(self,screen):
+    def draw(self,screen: pygame.Surface):
         pygame.draw.rect(screen, self.color, self.rect)
 
-    def mouseInteraction(self, position, status):
+    def mouseInteraction(self, position: tuple, status: list):
         return status
 
-    def keyResponse(self,event,status):
+    def keyResponse(self,event: pygame.event,status: list):
         return status
 
 class CloseButton(Button):
 
-    def __init__(self,width, height, position, statusCode):
+    def __init__(self,width: int, height: int, position: tuple, statusCode: str):
         super().__init__(width, height, position, os.path.join("images","closeButton.jpg"))
         self.statusCode = statusCode
 
@@ -130,38 +133,37 @@ class CloseButton(Button):
 
 class QuitButton(WordButton):
 
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         super().__init__(140,40, position, (51, 51, 204), WHITE, "Exit Game")
     
-    def mouseInteraction(self, position, status):
+    def mouseInteraction(self, position: tuple, status: list):
         if self.rect.collidepoint(position):
             status.extend([CLOSEGAME])
         return status
     
 class InstructionButton(WordButton):
 
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         super().__init__(140,40, position, (51, 51, 204), WHITE, "Instructions")
     
-    def mouseInteraction(self, position, status):
+    def mouseInteraction(self, position: tuple, status: list):
         if self.rect.collidepoint(position):
-            print("Instruction clicked")
             status.append(SCREENTOINSTRUCTION)
         return status
 
 class QuitGameButton(WordButton):
 
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         super().__init__(140, 40, position, (51, 51, 204), WHITE, "Quit Game") 
 
-    def mouseInteraction(self, position, status):
+    def mouseInteraction(self, position: tuple, status: list):
         if self.rect.collidepoint(position):
             status.extend([EXITGAME])
         return status
 
 class Tile(pygame.sprite.Sprite):
 
-    def __init__(self,position, imgFile):
+    def __init__(self,position: tuple, imgFile: str):
         super().__init__()
         self.x = position[0]
         self.y = position[1]
@@ -170,7 +172,7 @@ class Tile(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
 
-    def draw(self, screen, cam_pos):
+    def draw(self, screen: pygame.Surface, cam_pos: pygame.math.Vector2):
         screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
     
     def player_interaction(self, **args):
@@ -179,17 +181,17 @@ class Tile(pygame.sprite.Sprite):
 
 class Ground(Tile):
 
-    def __init__(self,position):
+    def __init__(self,position: tuple):
         super().__init__(position, os.path.join("images","groundTile.png"))
 
 class AirTile(Tile):
     
-    def __init__(self,position):
+    def __init__(self,position: tuple):
         super().__init__(position,os.path.join("images","airTile.png"))
 
 class InstructionScreen():
 
-    def __init__(self, closeStatusCode):
+    def __init__(self, closeStatusCode: str):
         self.instructions = [
             " 'A' key for going to the left ",
             " 'D' key for going to the right",
@@ -209,13 +211,13 @@ class InstructionScreen():
         self.closeButton = CloseButton(24,24, (712, 52), closeStatusCode)
         self.instruction_sprite_group = [self.background, self.closeButton]
 
-    def mouseInteraction(self, position, status):
+    def mouseInteraction(self, position: tuple, status: list):
         return self.closeButton.mouseInteraction(position, status)
 
-    def keyResponse(self,event,status):
+    def keyResponse(self,event: pygame.event, status: list):
         return status
     
-    def drawScreen(self, screen):
+    def drawScreen(self, screen: pygame.Surface):
         for sprite in self.instruction_sprite_group:
             sprite.draw(screen)
         for txt, txt_pos in self.fonts:
@@ -223,10 +225,10 @@ class InstructionScreen():
 
 class RestartButton(WordButton):
 
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         super().__init__(140,40, position, (51, 51, 204), WHITE, "Restart")
     
-    def mouseInteraction(self, position, status):
+    def mouseInteraction(self, position: tuple, status: list):
         if self.rect.collidepoint(position):
             status.extend([RESTARTGAME])
         return status
@@ -245,7 +247,7 @@ def deCoor2RelativeCoor(dePosition):
             
 
 #Apply a function to items in a list with optional arguments
-def apply(list, func, **args):
+def apply(list: list, func: Function, **args):
     result = []
     argument = ""
     for key, value in args.items():
@@ -260,13 +262,13 @@ def apply(list, func, **args):
     return result
 
 # Level status code
-def create_level_status_code(level):
+def create_level_status_code(level: int):
     return f"Initialise Level {level}"
 
-def check_status_init_level(string):
+def check_status_init_level(string: str):
     return bool(re.match("^(Initialise Level)\s\-?[0-9]+$", string))
 
-def extract_level_from_status_code(status_code):
+def extract_level_from_status_code(status_code: str):
     if not check_status_init_level(status_code):
         return None
     try:
@@ -276,7 +278,7 @@ def extract_level_from_status_code(status_code):
         return None
 
 class Spike:
-    def __init__(self, position, base, height):
+    def __init__(self, position: tuple, base: int, height: int):
         self.x = position[0]
         self.y = position[1]
         self.base = base
@@ -297,7 +299,7 @@ class Spike:
             left += base_change
             top -= height_change
 
-    def draw(self,screen, cam_position):
+    def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
         for rect in self.rect_group:
             pygame.draw.rect(screen,SILVER, pygame.Rect(rect.left - cam_position.x, rect.top - cam_position.y, rect.width, rect.height))
 
@@ -309,11 +311,11 @@ class Spike:
 
 class ActivateObjects(ABC):
 
-    def __init__(self,zone):
+    def __init__(self,zone: list):
         self.zone = pygame.Rect(*zone)
         self.activate = False
 
-    def detect(self, player_rect):
+    def detect(self, player_rect: pygame.Rect):
         if player_rect.colliderect(self.zone):
             self.activate = True
 
@@ -326,7 +328,7 @@ class ActivateObjects(ABC):
 
 class SpikeUp(Spike, ActivateObjects):
 
-    def __init__(self, position, base, height, zone, up, hori_dir = 0): #zone = (leftx, rightx, width, height)
+    def __init__(self, position: tuple, base: int, height: int, zone: list, up: int, hori_dir = 0): #zone = (leftx, rightx, width, height)
         temp_pos = (position[0], position[1])
         Spike.__init__(self, temp_pos, base, height)
         ActivateObjects.__init__(self,zone)
@@ -335,7 +337,7 @@ class SpikeUp(Spike, ActivateObjects):
         self.hori_dir = hori_dir
         self.tar_x = position[0] + hori_dir * BLOCKSIZE[0]
 
-    def player_interaction(self, player_rect):
+    def player_interaction(self, player_rect: pygame.Rect):
         if not self.activate:
             self.detect(player_rect)
         if self.activate and player_rect.collidelist(self.rect_group) != -1:
@@ -360,49 +362,51 @@ class SpikeUp(Spike, ActivateObjects):
             for rect in self.rect_group:
                 rect.x -= HORI_SPEED
 
-    def draw(self,screen, cam_position):
+    def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
         #pygame.draw.rect(screen, YELLOW, pygame.Rect(self.zone.left - cam_position.x, self.zone.top-cam_position.y, self.zone.width, self.zone.height))
         super().draw(screen, cam_position)
 
 class Appear_block(ActivateObjects, Ground):
 
-    def __init__(self,position):
+    def __init__(self,position: tuple):
         ActivateObjects.__init__(self, (position[0]-10, position[1]-10, BLOCKSIZE[0]+20, BLOCKSIZE[1]+20))
         Ground.__init__(self,position)
     
-    def draw(self, screen, cam_pos):
+    def draw(self, screen: pygame.Surface, cam_pos: pygame.math.Vector2):
         if self.activate:
             screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
         
-    def player_interaction(self,player_rect):
+    def player_interaction(self,player_rect: pygame.Rect):
         if not self.activate:
             self.detect(player_rect)
 
 class DisappearBlock(ActivateObjects, Ground):
 
-    def __init__(self,position):
-        ActivateObjects.__init__(self, (position[0]- 3, position[1]- 3, BLOCKSIZE[0] + 6, BLOCKSIZE[1] + 6))
+    def __init__(self,position: tuple):
+        # easier
+        # ActivateObjects.__init__(self, (position[0]- 3, position[1]- 3, BLOCKSIZE[0] + 6, BLOCKSIZE[1] + 6))
+        ActivateObjects.__init__(self, (position[0], position[1], BLOCKSIZE[0], BLOCKSIZE[1]))
         Ground.__init__(self,position)
         self.rect = NULL
         self.position = position
     
-    def draw(self, screen, cam_pos):
+    def draw(self, screen: pygame.Surface, cam_pos: pygame.math.Vector2):
         if not self.activate:
             screen.blit(self.image, (self.position[0] - cam_pos.x, self.position[1]))
 
-    def player_interaction(self,player_rect):
+    def player_interaction(self,player_rect: pygame.Rect):
         if not self.activate:
             self.detect(player_rect)
 
 class GrowSpike(Spike, ActivateObjects):
 
-    def __init__(self, position, base, height, zone, up, hori):
+    def __init__(self, position: tuple, base: int, height: int, zone: list, up: int, hori: int):
         Spike.__init__(self, position, base, height)
         ActivateObjects.__init__(self,zone)
         self.tar_height = height*up
         self.tar_base = hori * base
 
-    def player_interaction(self, player_rect):
+    def player_interaction(self, player_rect: pygame.Rect):
         if not self.activate:
             self.detect(player_rect)
         if self.activate and player_rect.collidelist(self.rect_group) != -1:
@@ -433,23 +437,23 @@ class GrowSpike(Spike, ActivateObjects):
                 left += base_change
                 top -= height_change
     
-    def draw(self,screen, cam_position):
+    def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
         #pygame.draw.rect(screen, YELLOW, pygame.Rect(self.zone.left - cam_position.x, self.zone.top-cam_position.y, self.zone.width, self.zone.height))
         super().draw(screen, cam_position)
 
 class Check_point(Tile, ActivateObjects):
 
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         Tile.__init__(self, position, os.path.join("images","respawn_before.png"))
         ActivateObjects.__init__(self, (position[0]-10, position[1]-10, BLOCKSIZE[0] + 20, BLOCKSIZE[1] + 20))
 
-    def player_interaction(self,player_rect):
+    def player_interaction(self,player_rect: pygame.Rect):
         if player_rect.colliderect(self.zone):
             self.image = pygame.transform.scale(pygame.image.load(os.path.join("images","respawn.png")), BLOCKSIZE)
             return [self.x, self.y +18]
 
 class HorizontalSpike():
-    def __init__(self, position, base, height):
+    def __init__(self, position: tuple, base: int, height: int):
         self.x = position[0]
         self.y = position[1]
         self.base = base
@@ -470,7 +474,7 @@ class HorizontalSpike():
             left += height_change
             top += base_change
 
-    def draw(self,screen, cam_position):
+    def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
         for rect in self.rect_group:
             pygame.draw.rect(screen,SILVER, pygame.Rect(rect.left - cam_position.x, rect.top - cam_position.y, rect.width, rect.height))
 
@@ -482,16 +486,15 @@ class HorizontalSpike():
 
 class MoveableHoriSpike(HorizontalSpike, SpikeUp):
 
-    def __init__(self, position, base, height, zone, up, hori_dir = 0):
-        print( position, base, height, zone, up, hori_dir)
+    def __init__(self, position: tuple, base: int, height: int, zone: list, up: int, hori_dir = 0):
         SpikeUp.__init__(self, position, base, height, zone, up, hori_dir)
         HorizontalSpike.__init__(self,position, base, height)
 
-    def draw(self,screen, cam_position):
+    def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
         #pygame.draw.rect(screen, YELLOW, pygame.Rect(self.zone.left - cam_position.x, self.zone.top-cam_position.y, self.zone.width, self.zone.height))
         HorizontalSpike.draw(self,screen, cam_position)
 
-    def player_interaction(self,player_rect):
+    def player_interaction(self,player_rect: pygame.Rect):
         SpikeUp.player_interaction(self,player_rect)
     
     def logic(self):
@@ -499,7 +502,7 @@ class MoveableHoriSpike(HorizontalSpike, SpikeUp):
 
 class Bullet(GameObject):
     
-    def __init__(self, direction, position):
+    def __init__(self, direction: int, position: tuple):
         super().__init__()
         self.image = pygame.transform.scale(pygame.image.load(os.path.join("images", "redRect.png")), BULLET_SIZE)
         self.rect = self.image.get_rect()
@@ -507,17 +510,17 @@ class Bullet(GameObject):
         self.rect.x = position[0]
         self.rect.y = position[1]
     
-    def update(self, tiles):
+    def update(self, tiles: list):
         self.rect.x += self.direction * BULLET_SPEED
         if len(pygame.sprite.spritecollide(self, tiles, False)) != 0:
             self.kill()
     
-    def draw(self, screen, cam_position):
+    def draw(self, screen: pygame.Surface, cam_position: pygame.math.Vector2):
         screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
 
 class FinishPoint(Tile, ActivateObjects):
     
-    def __init__(self, position):
+    def __init__(self, position: tuple):
         pygame.sprite.Sprite.__init__(self)
         ActivateObjects.__init__(self, (position[0], position[1], BLOCKSIZE[0], BLOCKSIZE[1]*5))
         self.image = pygame.transform.scale(pygame.image.load(os.path.join("images", "flag_red.png")), (BLOCKSIZE[0], BLOCKSIZE[1]*5))
@@ -528,5 +531,5 @@ class FinishPoint(Tile, ActivateObjects):
     def player_interaction(self,player_rect):
         pass
     
-    def draw(self, screen, cam_pos):
+    def draw(self, screen: pygame.Surface, cam_pos: pygame.math.Vector2):
         screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))

@@ -2,7 +2,10 @@ name, left x, top y, base, height, activation left, activation top, activation w
 normal_spike, 5,9,30, 30,,,,,,
 up_spike, 20,14,30,30,585, 300, 45, 120,,,1,0
 up_spike, 30, 8, 30, 30, 870, 180,115, 60,,,1,0
-disappear_block, 92, 14,,,,,,,3,1
+normal_spike, 92, 16,30,30,,,,,,
+normal_spike, 93, 16,30,30,,,,,,
+normal_spike, 94, 16,30,30,,,,,,
+disappear_block, 92, 14,,,,,,,3,4
 grow_spike, 40,14,30,30, 1185, 200, 45, 250,,,4,2
 hori_spike, 11, 8,30,30,,,,,,
 up_spike, 21,13,30,30,615, 300, 135, 120,,,0, 1
