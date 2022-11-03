@@ -1,3 +1,4 @@
+import csv
 import os
 from abc import ABC, abstractmethod
 from asyncio.windows_events import NULL
@@ -9,6 +10,9 @@ from constants import *
 
 
 class Button(pygame.sprite.Sprite, ABC):
+    """
+    Button Class with mouse interaction and key response method
+    """
 
     # Initialise Button as a sprite object
     def __init__(self,width: int, height: int, position: tuple, imageName: str):
@@ -239,10 +243,19 @@ def xReToDe(x_pos):
 def yReToDe(y_pos):
     return int(y_pos)*BLOCKSIZE[1]
 
-def relativeCoor2DeCoor(relativePosition):
+def relativeCoor2DeCoor(relativePosition: tuple)-> tuple:
+    """
+    take in relative coordinate and return pygame coordinate
+
+    Args:
+        relativePosition (tuple): relative coordinate (1 = 1 Block Size)
+
+    Returns:
+        tuple: pygame coordinate
+    """
     return (xReToDe(relativePosition[0]), yReToDe(relativePosition[1]))
 
-def deCoor2RelativeCoor(dePosition):
+def deCoor2RelativeCoor(dePosition: tuple) -> tuple:
     return (dePosition[0]/BLOCKSIZE[0], dePosition[1]/BLOCKSIZE[1])
             
 
@@ -533,3 +546,52 @@ class FinishPoint(Tile, ActivateObjects):
     
     def draw(self, screen: pygame.Surface, cam_pos: pygame.math.Vector2):
         screen.blit(self.image, (self.rect.x - cam_pos.x, self.rect.y))
+
+class TrapGroup():
+
+    def __init__(self, filename: str):
+        self.all_trap_group = []
+        self.parseFile(filename)
+
+    def parseFile(self,filename: str):
+        # Maybe not use standard csv file but determine how to read the content by the first column
+        
+        with open(filename, 'r') as f:
+            reader =  csv.reader(f)
+            next(reader)
+
+            for row in reader:
+                relPos = (int(row[1]), int(row[2]))
+                dePos = relativeCoor2DeCoor(relPos)
+                if row[0] == "normal_spike":
+                    trap = Spike(dePos, int(row[3]), int(row[4]))
+                    self.all_trap_group.append(trap)
+                elif row[0] == "up_spike":
+                    trap = SpikeUp(dePos, int(row[3]), int(row[4]),apply(row[5:9], int), int(row[11]), int(row[12]))
+                    self.all_trap_group.append(trap)
+                elif row[0] == "disappear_block":
+                    for i in range(int(row[9])):
+                        for j in range(int(row[10])):
+                            trap = DisappearBlock((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+                            self.all_trap_group.append(trap)
+                elif row[0] == "grow_spike":
+                    trap = GrowSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], int), int(row[11]), int(row[12]))
+                    self.all_trap_group.append(trap)
+                elif row[0] == "hori_spike":
+                    trap = HorizontalSpike(dePos, int(row[3]), int(row[4]))
+                    self.all_trap_group.append(trap)
+                elif row[0] == "hori_move_spike":
+                    trap = MoveableHoriSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], int), int(row[11]), int(row[12]))
+                    self.all_trap_group.append(trap)
+                    
+    def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
+        for trap in self.all_trap_group:
+            trap.draw(screen, cam_position)
+
+    def logic(self):
+        for trap in self.all_trap_group:
+            trap.logic()
+
+    def player_interaction(self, player_rect: pygame.Rect):
+        for trap in self.all_trap_group:
+            trap.player_interaction(player_rect = player_rect)
