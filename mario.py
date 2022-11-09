@@ -7,7 +7,8 @@ import pygame
 from camera import *
 from constants import *
 from helper import *
-
+from map1 import *
+from map2 import *
 
 class Game:
     
@@ -20,7 +21,8 @@ class Game:
         self.done = False
         
         # Load Map
-        self.map = Map(os.path.join("files","map" +str(level) +".csv"))
+        # self.map = Map(os.path.join("files","map" + str(level) +".csv"))
+        self.map = Map(level)
         
         # Level of this game
         self.level = level
@@ -237,7 +239,7 @@ class Game:
         if self.currentScreen == GAME:
             
             # Player and bullet interactions with dead zone, tiles and enemies
-            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status,self.enemy_sprite_group, self.trap_group)
+            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status,self.enemy_sprite_group, self.trap_group, self.map.disappear_tiles)
             
             # Add new status code to status (if there is one)
             if temp != None:
@@ -261,6 +263,9 @@ class Game:
 
             # Traps logic
             self.trap_group.logic()
+            
+            for tiles in self.map.disappear_tiles:
+                tiles.logic()
 
             # Update enemies
             for enemy in self.enemy_sprite_group:
@@ -332,6 +337,8 @@ class Game:
         """
         self.done = False
         while not self.done:
+            
+            logging.debug(f"{self.player.rect.x}")
             
             # Loop throught events
             for event in pygame.event.get():
@@ -505,6 +512,8 @@ class Player(pygame.sprite.Sprite):
             # IF there are collisions, change x coordinate to the right of the block it collide with
             for tile in tiles:
                 self.rect.x = max(tile.rect.right, self.rect.x)
+        
+        self.xSpeed = 0
 
     def collisionY(self, tiles: list):
         """
@@ -562,7 +571,7 @@ class Player(pygame.sprite.Sprite):
         return None
 
     # Logic and updates
-    def update(self, tiles: list, dead_zone: list, status: str, enemy_sprite_group: pygame.sprite.Group, trap_group: TrapGroup) -> bool:
+    def update(self, tiles: list, dead_zone: list, status: str, enemy_sprite_group: pygame.sprite.Group, trap_group: TrapGroup, disappear_tiles: list) -> bool:
         """
         Update the Player including the interaction with environment
 
@@ -596,6 +605,8 @@ class Player(pygame.sprite.Sprite):
 
         # Traps activaltion
         trap_group.player_interaction(self.rect)
+        for tile in disappear_tiles:
+            tile.player_interaction(self.rect)
 
         # Check if the player touches dead zone
         self.check_dead_zone(dead_zone)
@@ -679,7 +690,7 @@ class Player(pygame.sprite.Sprite):
 class Map:
     
     # Initialise Map object
-    def __init__(self, map_file_name: str):
+    def __init__(self, level: int):
         
         # Ground Tiles
         self.groundSpriteGroup = pygame.sprite.Group()
@@ -690,79 +701,149 @@ class Map:
         # Checkpoint blocks
         self.checkpoint_group = []
         
+        self.disappear_tiles = []
+        
         # Deadzones
         self.dead_zone = []
         
         self.finish_point = NULL
 
-        # Parse the csv map file
-        with open(map_file_name, 'r') as f:
-            reader =  csv.reader(f)
-            
-            # Skip the header
-            next(reader)
-            
-            # Set the first row as vertices of the map
-            self.vertices = apply(next(reader), int) # min x, max x, min y, max y
-            
-            # Get the starting position of the player
-            self.player_start_pos = apply(next(reader), int)[0:2] #Left x, top y
+        
+        temp = {}
+        exec(f"map_list = map{level}", globals(), temp)
+        exec(f"barrier_list = barrier{level}", globals(), temp)
+        exec(f"vertices = vertices{level}", globals(), temp)
+        map_list = temp["map_list"]
+        barrier_list = temp["barrier_list"]
+        self.vertices = temp["vertices"]
 
-            # Loop through the remaining row
-            for row in reader:
-                self.parseMap(row)
+        self.parseMap(map_list, barrier_list)
+    
+    def parseMap(self, map: list, barrier_list: list):
+    
+        self.dead_zone.append((*relativeCoor2DeCoor(barrier_list[0:2]), barrier_list[2]*BLOCKSIZE[0], barrier_list[3]*BLOCKSIZE[1]))
         
-    def parseMap(self,row: list):
-        """Create objects according to the information of that row
-
-        Args:
-            row (list): a row in the csv file
-        """
-        
-        # Get the relative position
-        relPos = (int(row[1]), int(row[2]))
-        
-        # Turn relative position into coordinate in the Pygame
-        dePos = relativeCoor2DeCoor(relPos)
-        
-        # Number of block extending horizontally and vertically
-        width = int(row[3])
-        height = int(row[4])
-        
-        # Ground block
-        if row[0] == "ground":
-            for i in range(width):
-                for j in range(height):
-                    groundTile = Ground((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
-                    self.groundSpriteGroup.add(groundTile)
-                    self.tileGroup.add(groundTile)
+        for r_num, row in enumerate(map):
+            for c_num, col in enumerate(row):
+                if col == "G":
+                    ground = Ground(relativeCoor2DeCoor((c_num, r_num)))
+                    self.groundSpriteGroup.add(ground)
+                    self.tileGroup.add(ground)
                     
-        # Air Block
-        elif row[0] == "airTile":
-            for i in range(width):
-                for j in range(height):
-                    airTile = AirTile((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+                elif col == "D":
+                    disappear_tile = DisappearBlock(relativeCoor2DeCoor((c_num, r_num)))
+                    self.disappear_tiles.append(disappear_tile)
+                
+                elif col == "A":
+                    appear_tile = Appear_block(relativeCoor2DeCoor((c_num, r_num)))
+                    self.tileGroup.add(appear_tile)
+                    
+                elif col == "a":
+                    airTile = AirTile(relativeCoor2DeCoor((c_num, r_num)))
                     self.tileGroup.add(airTile)
+                    
+                elif col == "F":
+                    self.finish_point = FinishPoint(relativeCoor2DeCoor((c_num, r_num-4)))
+                
+                elif col == "C":
+                    tile = Check_point(relativeCoor2DeCoor((c_num, r_num)))
+                    self.checkpoint_group.append(tile)
+                
+                elif col == "P":
+                    self.player_start_pos = relativeCoor2DeCoor((c_num, r_num))
+    
+    # Initialise Map object
+    # def __init__(self, map_file_name: str):
         
-        # Deadzone ("barrier")
-        elif row[0] == "barrier":
-            self.dead_zone.append((*dePos, width*BLOCKSIZE[0], height*BLOCKSIZE[1]))
-            
-        # Hidden block (only appear if the player is close)
-        elif row[0] == "appear_block":
-            for i in range(width):
-                for j in range(height):
-                    tile = Appear_block((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
-                    self.tileGroup.add(tile)
+    #     # Ground Tiles
+    #     self.groundSpriteGroup = pygame.sprite.Group()
         
-        # Checkpoints
-        elif row[0] == "check_point":
-            tile = Check_point(dePos)
-            self.checkpoint_group.append(tile)
-            
-        elif row[0] == "finish_point":
-            self.finish_point = FinishPoint(dePos)
+    #     # All tiles
+    #     self.tileGroup = pygame.sprite.Group()
+        
+    #     # Checkpoint blocks
+    #     self.checkpoint_group = []
+        
+    #     self.disappear_tiles = []
+        
+    #     # Deadzones
+    #     self.dead_zone = []
+        
+    #     self.finish_point = NULL
 
+    #     # Parse the csv map file
+    #     with open(map_file_name, 'r') as f:
+    #         reader =  csv.reader(f)
+            
+    #         # Skip the header
+    #         next(reader)
+            
+    #         # Set the first row as vertices of the map
+    #         self.vertices = apply(next(reader), int) # min x, max x, min y, max y
+            
+    #         # Get the starting position of the player
+    #         self.player_start_pos = apply(next(reader), int)[0:2] #Left x, top y
+
+    #         # Loop through the remaining row
+    #         for row in reader:
+    #             self.parseMap(row)
+        
+    # def parseMap(self,row: list):
+    #     """Create objects according to the information of that row
+
+    #     Args:
+    #         row (list): a row in the csv file
+    #     """
+        
+    #     # Get the relative position
+    #     relPos = (int(row[1]), int(row[2]))
+        
+    #     # Turn relative position into coordinate in the Pygame
+    #     dePos = relativeCoor2DeCoor(relPos)
+        
+    #     # Number of block extending horizontally and vertically
+    #     width = int(row[3])
+    #     height = int(row[4])
+        
+    #     # Ground block
+    #     if row[0] == "ground":
+    #         for i in range(width):
+    #             for j in range(height):
+    #                 groundTile = Ground((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+    #                 self.groundSpriteGroup.add(groundTile)
+    #                 self.tileGroup.add(groundTile)
+                    
+    #     # Air Block
+    #     elif row[0] == "airTile":
+    #         for i in range(width):
+    #             for j in range(height):
+    #                 airTile = AirTile((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+    #                 self.tileGroup.add(airTile)
+        
+    #     # Deadzone ("barrier")
+    #     elif row[0] == "barrier":
+    #         self.dead_zone.append((*dePos, width*BLOCKSIZE[0], height*BLOCKSIZE[1]))
+            
+    #     # Hidden block (only appear if the player is close)
+    #     elif row[0] == "appear_block":
+    #         for i in range(width):
+    #             for j in range(height):
+    #                 tile = Appear_block((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+    #                 self.tileGroup.add(tile)
+        
+    #     # Checkpoints
+    #     elif row[0] == "check_point":
+    #         tile = Check_point(dePos)
+    #         self.checkpoint_group.append(tile)
+            
+    #     elif row[0] == "finish_point":
+    #         self.finish_point = FinishPoint(dePos)
+
+    #     elif row[0] == "disappear_block":
+    #         for i in range(int(row[3])):
+    #             for j in range(int(row[4])):
+    #                 trap = DisappearBlock((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
+    #                 self.disappear_tiles.append(trap)
     # Draw objects on screen
     def draw(self,screen: pygame.Surface, cam_pos: pygame.math.Vector2):
         """Draw objects
@@ -783,7 +864,10 @@ class Map:
         # Draw checkpoints
         for respawn in self.checkpoint_group:
             respawn.draw(screen, cam_pos)
-
+        
+        for tiles in self.disappear_tiles:
+            tiles.draw(screen, cam_pos)
+        
         self.finish_point.draw(screen, cam_pos)
 
 class MenuButton(Button):
@@ -917,6 +1001,36 @@ class Goomba(Enemy):
     def __init__(self, position, x_boundary, y_boundary):
         super().__init__(position, x_boundary, y_boundary, os.path.join("images","goomba.png"), GOOMBA_SIZE, 30)
 
+class Shooter(Enemy):
+
+    def __init__(self, position):
+        self.image = pygame.transform.scale(pygame.image.load(os.path.join("images","goomba.png")), BLOCKSIZE)
+        # self.image = pygame.surface(BLOCKSIZE)
+        self.rect = self.image.get_rect()
+        self.position = pygame.math.Vector2(position)
+        self.rect.x = self.position.x
+        self.rect.y = self.position.y
+        self.player_pos = pygame.math.Vector2(0,0)
+        self.bullet_group = pygame.sprite.Group()
+    
+    def load_player_pos(self, pos):
+        self.player_pos.x = pos[0]
+        self.player_pos.y = pos[1]
+
+    def shoot(self):
+        if self.position.distance_to(self.player_pos) < 300:
+            pass
+
+class EnemyBullet(GameObject):
+    
+    def __init__(self, direction: pygame.math.Vector2, position: tuple):
+        super().__init__()
+        self.image = pygame.transform.scale(pygame.image.load(os.path.join("images", "redRect.png")), (10,10))
+        self.rect = self.image.get_rect()
+        self.direction = direction
+        self.rect.x = position[0]
+        self.rect.y = position[1]
+        
 class DeathText():
 
     def __init__(self):
@@ -933,7 +1047,6 @@ class GameBoard():
     
     def __init__(self, death_count=0):
         self.time = 0
-        self.death_count = 0
         self.death_image = pygame.transform.scale(pygame.image.load(os.path.join("images", "death.png")), (40,40))
         self.death_image_coor = (498,20)
         self.death_count = death_count
@@ -946,6 +1059,7 @@ class GameBoard():
         screen.blit(self.death_image, self.death_image_coor)
         txt = self.small_font.render(str(self.death_count), True, BLACK)
         screen.blit(txt, (558, 30))
+        
 
 class WinText():
     

@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 from abc import ABC, abstractmethod
 from asyncio.windows_events import NULL
@@ -237,10 +238,28 @@ class RestartButton(WordButton):
             status.extend([RESTARTGAME])
         return status
 
-def xReToDe(x_pos):
+def xReToDe(x_pos: int) -> int:
+    """
+    Relative x coordinate (Block size) to pygame x coordinate
+
+    Args:
+        x_pos (tuple): relative x coordinate position
+
+    Returns:
+        int: the corresponding pygame x coordinate
+    """
     return int(x_pos)*BLOCKSIZE[0]
 
-def yReToDe(y_pos):
+def yReToDe(y_pos: int) -> int:
+    """
+    Relative y coordinate (Block size) to pygame y coordinate
+
+    Args:
+        y_pos (tuple): relative y coordinate position
+
+    Returns:
+        int: the corresponding pygame y coordinate
+    """
     return int(y_pos)*BLOCKSIZE[1]
 
 def relativeCoor2DeCoor(relativePosition: tuple)-> tuple:
@@ -255,18 +274,38 @@ def relativeCoor2DeCoor(relativePosition: tuple)-> tuple:
     """
     return (xReToDe(relativePosition[0]), yReToDe(relativePosition[1]))
 
+
 def deCoor2RelativeCoor(dePosition: tuple) -> tuple:
+    """
+    Pygame coordinate to realtive coordinate
+
+    Args:
+        dePosition (tuple): pygame coordinate
+
+    Returns:
+        tuple: relative coordinate
+    """
     return (dePosition[0]/BLOCKSIZE[0], dePosition[1]/BLOCKSIZE[1])
             
 
-#Apply a function to items in a list with optional arguments
-def apply(list: list, func: Function, **args):
+def apply(ls: list, func: Function, **args) -> list:
+    """
+    Apply a function to items in a list with optional arguments
+
+    Args:
+        ls (list): list to be applying to
+        func (Function): function to apply
+        **args: list of arguments to be passed to
+
+    Returns:
+        list: The list with function applied to each element
+    """
     result = []
     argument = ""
     for key, value in args.items():
         argument = argument + ", " + str(key) +"="+str(value)
     argument = argument + ")"
-    for i in list:
+    for i in ls:
         com = f"x = {func.__name__}({ i }" + argument
         loc = {}
         exec(f"{com}",globals(),loc)
@@ -376,7 +415,7 @@ class SpikeUp(Spike, ActivateObjects):
                 rect.x -= HORI_SPEED
 
     def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
-        #pygame.draw.rect(screen, YELLOW, pygame.Rect(self.zone.left - cam_position.x, self.zone.top-cam_position.y, self.zone.width, self.zone.height))
+        # pygame.draw.rect(screen, YELLOW, pygame.Rect(self.zone.left - cam_position.x, self.zone.top-cam_position.y, self.zone.width, self.zone.height))
         super().draw(screen, cam_position)
 
 class Appear_block(ActivateObjects, Ground):
@@ -531,11 +570,10 @@ class Bullet(GameObject):
     def draw(self, screen: pygame.Surface, cam_position: pygame.math.Vector2):
         screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
 
-class FinishPoint(Tile, ActivateObjects):
+class FinishPoint(Tile):
     
     def __init__(self, position: tuple):
         pygame.sprite.Sprite.__init__(self)
-        ActivateObjects.__init__(self, (position[0], position[1], BLOCKSIZE[0], BLOCKSIZE[1]*5))
         self.image = pygame.transform.scale(pygame.image.load(os.path.join("images", "flag_red.png")), (BLOCKSIZE[0], BLOCKSIZE[1]*5))
         self.rect = self.image.get_rect()
         self.rect.x = position[0]
@@ -564,16 +602,13 @@ class TrapGroup():
                 relPos = (int(row[1]), int(row[2]))
                 dePos = relativeCoor2DeCoor(relPos)
                 if row[0] == "normal_spike":
-                    trap = Spike(dePos, int(row[3]), int(row[4]))
-                    self.all_trap_group.append(trap)
+                    for i in range(int(row[5])):
+                        for j in range(int(row[6])):
+                            trap = Spike(relativeCoor2DeCoor((int(row[1])+ i, int(row[2])+j)), int(row[3]), int(row[4]))
+                            self.all_trap_group.append(trap)
                 elif row[0] == "up_spike":
                     trap = SpikeUp(dePos, int(row[3]), int(row[4]),apply(row[5:9], int), int(row[11]), int(row[12]))
                     self.all_trap_group.append(trap)
-                elif row[0] == "disappear_block":
-                    for i in range(int(row[9])):
-                        for j in range(int(row[10])):
-                            trap = DisappearBlock((dePos[0]+ BLOCKSIZE[0] * i, dePos[1]+ BLOCKSIZE[1] * j))
-                            self.all_trap_group.append(trap)
                 elif row[0] == "grow_spike":
                     trap = GrowSpike(dePos, int(row[3]), int(row[4]),apply(row[5:9], int), int(row[11]), int(row[12]))
                     self.all_trap_group.append(trap)
@@ -595,3 +630,4 @@ class TrapGroup():
     def player_interaction(self, player_rect: pygame.Rect):
         for trap in self.all_trap_group:
             trap.player_interaction(player_rect = player_rect)
+            
