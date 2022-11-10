@@ -9,6 +9,7 @@ from constants import *
 from helper import *
 from map1 import *
 from map2 import *
+from map3 import *
 
 class Game:
     
@@ -239,7 +240,7 @@ class Game:
         if self.currentScreen == GAME:
             
             # Player and bullet interactions with dead zone, tiles and enemies
-            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status,self.enemy_sprite_group, self.trap_group, self.map.disappear_tiles)
+            temp = self.player.update(self.map.tileGroup, self.map.dead_zone, self.status,self.enemy_sprite_group, self.trap_group, self.map.disappear_tiles, self.map.vertices[0:2])
             
             # Add new status code to status (if there is one)
             if temp != None:
@@ -513,7 +514,7 @@ class Player(pygame.sprite.Sprite):
             for tile in tiles:
                 self.rect.x = max(tile.rect.right, self.rect.x)
         
-        self.xSpeed = 0
+
 
     def collisionY(self, tiles: list):
         """
@@ -571,7 +572,7 @@ class Player(pygame.sprite.Sprite):
         return None
 
     # Logic and updates
-    def update(self, tiles: list, dead_zone: list, status: str, enemy_sprite_group: pygame.sprite.Group, trap_group: TrapGroup, disappear_tiles: list) -> bool:
+    def update(self, tiles: list, dead_zone: list, status: str, enemy_sprite_group: pygame.sprite.Group, trap_group: TrapGroup, disappear_tiles: list, x_boundary: list) -> bool:
         """
         Update the Player including the interaction with environment
 
@@ -601,7 +602,7 @@ class Player(pygame.sprite.Sprite):
 
         # Shoot logics
         self.shoot_timer()
-        self.bullet_group.update(tiles)
+        self.bullet_group.update(tiles, x_boundary)
 
         # Traps activaltion
         trap_group.player_interaction(self.rect)
@@ -720,6 +721,13 @@ class Map:
         self.parseMap(map_list, barrier_list)
     
     def parseMap(self, map: list, barrier_list: list):
+        """
+        Parse all tiles in map from the map (tile map)
+
+        Args:
+            map (list): a x to y map where x is number of tiles horizontally and y is th number of tiles vertically. (G = ground tile, D = DisappearBlock, A = appear block, a = air tile, F = finish point, C = checkpoint, P = player position, f = Fake spike)
+            barrier_list (list): Death Zone (left, right, top, bottom)
+        """
     
         self.dead_zone.append((*relativeCoor2DeCoor(barrier_list[0:2]), barrier_list[2]*BLOCKSIZE[0], barrier_list[3]*BLOCKSIZE[1]))
         
@@ -751,6 +759,11 @@ class Map:
                 
                 elif col == "P":
                     self.player_start_pos = relativeCoor2DeCoor((c_num, r_num))
+                    self.player_start_pos = (self.player_start_pos[0], self.player_start_pos[1]+BLOCKSIZE[1]-PLAYER_SIZE[1])
+
+                elif col == "f":
+                    fake = FakeSpike(relativeCoor2DeCoor((c_num, r_num)))
+                    self.tileGroup.add(fake)
     
     # Initialise Map object
     # def __init__(self, map_file_name: str):

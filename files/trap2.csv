@@ -1,13 +1,14 @@
-name, left x, top y, base, height, activation left, activation top, activation width, activation height, num block x, num block y,up, hori_dir
-normal_spike, 5,9,30, 30,1,1,,,,
-up_spike, 20,14,30,30,585, 300, 45, 120,,,1,0
-up_spike, 30, 8, 30, 30, 870, 180,115, 60,,,1,0
-normal_spike, 92, 16,30,30,3,1,,,,
-grow_spike, 40,14,30,30, 1185, 200, 45, 250,,,4,2
-hori_spike, 11, 8,30,30,,,,,,
-up_spike, 21,13,30,30,615, 300, 135, 120,,,0, 1
-up_spike, 21,13,30,30,615, 300, 135, 120,,,0, 2
-up_spike, 21,13,30,30,615, 300, 135, 120,,,0, 3
-hori_move_spike, 50,12,30,30, 1515, 270, 75, 120,,,0,2
-up_spike, 41,14,30,30,1215, 300, 135, 120,,,4, 1
-grow_spike, 55,13, 30,30, 1610, 300, 120, 120,,,1,3
+name, left x, top y, base, height, activation area x, activation area y
+normal_spike, 8, 13,30,30,7,1
+up_spike,15,13, 30,30,420,330, 120,120,,,1,0
+up_spike,16,13, 30,30,420,330, 120,120,,,1,0
+up_spike,17,13, 30,30,420,330, 120,120,,,1,0
+up_spike,18,10, 30,90,780,240, 120,210,,,0,16
+up_spike,35,13, 30,30,990,330, 180,120,,,1,0
+up_spike,36,13, 30,30,990,330, 180,120,,,1,0
+up_spike,37,13, 30,30,990,330, 180,120,,,1,0
+up_spike,38,13, 30,30,990,330, 180,120,,,1,0
+grow_spike, 57,12,30,30, 1600, 120, 400, 210,,,10,5
+hori_move_spike, 49,15,90,30, 1770, 450, 90, 90,,,0,20
+up_spike, 75, 5, 60,240, 2070, 120,400,270,,,0,-50
+normal_spike, 79,15,30,30,4,1

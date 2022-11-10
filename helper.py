@@ -188,7 +188,34 @@ class Ground(Tile):
 
     def __init__(self,position: tuple):
         super().__init__(position, os.path.join("images","groundTile.png"))
+        
+class FakeSpike(Ground):
+    def __init__(self,position: tuple):
+        super().__init__(position)
+        self.x = position[0]
+        self.y = position[1]
+        self.base = self.height = 30
+        self.rect_group = []
+        self.createRect()
 
+    def createRect(self):
+        base_change = self.base / 40
+        height_change = self.height / 20
+        base_length = self.base - base_change*2
+        left = self.x + base_change
+        top = self.y + self.height-height_change
+        for i in range(19):
+            rect = pygame.Rect(left, top, base_length, height_change)
+            self.rect_group.append(rect)
+            base_length -= base_change*2
+            left += base_change
+            top -= height_change
+            
+    def draw(self,screen: pygame.Surface, cam_position: pygame.math.Vector2):
+        screen.blit(self.image, (self.rect.x - cam_position.x, self.rect.y))
+        for rect in self.rect_group:
+            pygame.draw.rect(screen,SILVER, pygame.Rect(rect.left - cam_position.x, rect.top - cam_position.y, rect.width, rect.height))
+    
 class AirTile(Tile):
     
     def __init__(self,position: tuple):
@@ -562,9 +589,9 @@ class Bullet(GameObject):
         self.rect.x = position[0]
         self.rect.y = position[1]
     
-    def update(self, tiles: list):
+    def update(self, tiles: list, x_boundary):
         self.rect.x += self.direction * BULLET_SPEED
-        if len(pygame.sprite.spritecollide(self, tiles, False)) != 0:
+        if len(pygame.sprite.spritecollide(self, tiles, False)) != 0 or self.rect.right < x_boundary[0] or self.rect.left > x_boundary[1]:
             self.kill()
     
     def draw(self, screen: pygame.Surface, cam_position: pygame.math.Vector2):
