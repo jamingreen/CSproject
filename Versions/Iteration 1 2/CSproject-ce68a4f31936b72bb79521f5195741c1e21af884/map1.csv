@@ -1,0 +1,3 @@
+type, startingX, startingY, widthSize, heightSize
+ground, 0, 8, 20, 2
+airTile, 4, 5, 3, 1

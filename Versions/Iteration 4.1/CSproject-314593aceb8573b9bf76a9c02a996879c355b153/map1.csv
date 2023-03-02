@@ -1,0 +1,5 @@
+type, startingX, startingY, widthSize, heightSize
+0, 1600, 0, 500 
+150, 430,,,
+ground, 0, 8, 32, 2
+airTile, 4, 5, 3, 1

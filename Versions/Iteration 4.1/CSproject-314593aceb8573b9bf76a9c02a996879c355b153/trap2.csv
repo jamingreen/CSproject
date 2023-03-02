@@ -1,0 +1,12 @@
+name, left x, top y, base, height, activation left, activation top, activation width, activation height, num block x, num block y,up, hori_dir
+normal_spike, 5,9,30, 30,,,,,,
+up_spike, 20,14,30,30,585, 300, 45, 120,,,1,0
+up_spike, 30, 8, 30, 30, 870, 180,115, 60,,,1,0
+disappear_block, 92, 14,,,,,,,3,1
+grow_spike, 40,14,30,30, 1185, 200, 45, 250,,,4
+hori_spike, 11, 8,30,30,,,,,,
+up_spike, 21,13,30,30,615, 300, 135, 120,,,0, 1
+up_spike, 21,13,30,30,615, 300, 135, 120,,,0, 2
+up_spike, 21,13,30,30,615, 300, 135, 120,,,0, 3
+hori_move_spike, 50,12,30,30, 1515, 270, 75, 120,,,0,2
+up_spike, 41,14,30,30,1215, 300, 135, 120,,,4, 1
